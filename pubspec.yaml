@@ -42,7 +42,7 @@ dependencies:
   flutter_dotenv: ^5.2.1
 
   # Markdown (respuestas de Gemini)
-  flutter_markdown: ^0.7.4+1
+  flutter_markdown_plus: ^1.0.3
 
   # Texto a voz usando TTS del sistema
   flutter_tts: ^3.8.3
