@@ -47,3 +47,6 @@ app.*.map.json
 # Environment config files
 .env
 .env.*.local
+
+# Database
+database/*
