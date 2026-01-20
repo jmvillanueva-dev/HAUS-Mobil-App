@@ -118,7 +118,7 @@ class EmailVerificationSentPage extends StatelessWidget {
                 _buildStep(
                   context,
                   number: '2',
-                  text: 'Busca el correo de Login Pro',
+                  text: 'Busca el correo de HAUS',
                   icon: Icons.search_rounded,
                 ),
                 const SizedBox(height: 12),
