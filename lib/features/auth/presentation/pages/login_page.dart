@@ -9,7 +9,7 @@ import '../widgets/loading_overlay.dart';
 import 'reset_password_page.dart';
 import 'role_selection_page.dart';
 import 'onboarding_page.dart';
-import 'welcome_page.dart';
+import '../../../home/presentation/pages/main_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -69,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
           } else if (state is AuthAuthenticated) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (_) => WelcomePage(user: state.user),
+                builder: (_) => MainPage(user: state.user),
               ),
             );
           }
