@@ -23,6 +23,13 @@ import 'features/auth/domain/usecases/sign_in.dart' as _i390;
 import 'features/auth/domain/usecases/sign_out.dart' as _i71;
 import 'features/auth/domain/usecases/sign_up.dart' as _i341;
 import 'features/auth/presentation/bloc/auth_bloc.dart' as _i1026;
+import 'features/locations/data/datasources/location_remote_data_source.dart'
+    as _i200;
+import 'features/locations/data/repositories/location_repository_impl.dart'
+    as _i201;
+import 'features/locations/domain/repositories/location_repository.dart'
+    as _i202;
+import 'core/services/avatar_service.dart' as _i203;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -35,8 +42,14 @@ extension GetItInjectableX on _i174.GetIt {
       environment,
       environmentFilter,
     );
+
+    // Core
     gh.lazySingleton<_i1054.NetworkInfo>(
         () => _i1054.NetworkInfoImpl(gh<_i895.Connectivity>()));
+    gh.lazySingleton<_i203.AvatarService>(
+        () => _i203.AvatarServiceImpl(gh<_i454.SupabaseClient>()));
+
+    // Auth Feature
     gh.lazySingleton<_i796.AuthRemoteDataSource>(
         () => _i796.AuthRemoteDataSourceImpl(gh<_i454.SupabaseClient>()));
     gh.lazySingleton<_i742.AuthRepository>(() => _i529.AuthRepositoryImpl(
@@ -58,6 +71,16 @@ extension GetItInjectableX on _i174.GetIt {
           getCurrentUser: gh<_i833.GetCurrentUser>(),
           authRepository: gh<_i742.AuthRepository>(),
         ));
+
+    // Locations Feature
+    gh.lazySingleton<_i200.LocationRemoteDataSource>(
+        () => _i200.LocationRemoteDataSourceImpl(gh<_i454.SupabaseClient>()));
+    gh.lazySingleton<_i202.LocationRepository>(
+        () => _i201.LocationRepositoryImpl(
+              remoteDataSource: gh<_i200.LocationRemoteDataSource>(),
+              networkInfo: gh<_i1054.NetworkInfo>(),
+            ));
+
     return this;
   }
 }
