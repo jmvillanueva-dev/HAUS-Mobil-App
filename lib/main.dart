@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
-import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/pages/landing_page.dart';
 import 'injection_container.dart';
 
 void main() async {
@@ -37,7 +37,7 @@ class HausApp extends StatelessWidget {
         theme: AppTheme.darkTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark,
-        home: const LoginPage(),
+        home: const LandingPage(),
       ),
     );
   }
