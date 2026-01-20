@@ -76,6 +76,7 @@ class UpdateProfileRequested extends AuthEvent {
   final String? phone;
   final String? bio;
   final String? universityOrCompany;
+  final String? avatarUrl;
 
   const UpdateProfileRequested({
     this.firstName,
@@ -83,9 +84,10 @@ class UpdateProfileRequested extends AuthEvent {
     this.phone,
     this.bio,
     this.universityOrCompany,
+    this.avatarUrl,
   });
 
   @override
   List<Object?> get props =>
-      [firstName, lastName, phone, bio, universityOrCompany];
+      [firstName, lastName, phone, bio, universityOrCompany, avatarUrl];
 }

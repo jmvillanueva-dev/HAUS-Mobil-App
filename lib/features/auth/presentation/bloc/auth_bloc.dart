@@ -163,6 +163,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           bio: event.bio ?? currentUser.bio,
           universityOrCompany:
               event.universityOrCompany ?? currentUser.universityOrCompany,
+          avatarUrl: event.avatarUrl ?? currentUser.avatarUrl,
         );
 
         // Actualizar perfil en BD
