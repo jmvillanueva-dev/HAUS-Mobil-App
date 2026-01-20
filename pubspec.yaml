@@ -66,6 +66,9 @@ dependencies:
 
   # Network
   connectivity_plus: ^6.1.2
+  
+  # Path utilities
+  path: ^1.9.0
 
   # Local Notifications
   flutter_local_notifications: ^19.5.0
