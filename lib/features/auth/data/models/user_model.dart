@@ -128,8 +128,9 @@ class UserModel extends UserEntity {
     if (phone != null) map['phone'] = phone;
     if (avatarUrl != null) map['avatar_url'] = avatarUrl;
     if (bio != null) map['bio'] = bio;
-    if (universityOrCompany != null)
+    if (universityOrCompany != null) {
       map['university_or_company'] = universityOrCompany;
+    }
     return map;
   }
 

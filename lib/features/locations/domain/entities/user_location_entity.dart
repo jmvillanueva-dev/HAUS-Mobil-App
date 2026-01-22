@@ -133,8 +133,9 @@ class UserLocationEntity extends Equatable {
   String get formattedAddress {
     final parts = <String>[];
     if (address != null && address!.isNotEmpty) parts.add(address!);
-    if (neighborhood != null && neighborhood!.isNotEmpty)
+    if (neighborhood != null && neighborhood!.isNotEmpty) {
       parts.add(neighborhood!);
+    }
     if (city != null && city!.isNotEmpty) parts.add(city!);
     return parts.isNotEmpty ? parts.join(', ') : 'Sin dirección';
   }
