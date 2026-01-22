@@ -49,7 +49,4 @@ app.*.map.json
 .env.*.local
 
 # Database
-database/*
-
-# Env
-.env
+# database/*
