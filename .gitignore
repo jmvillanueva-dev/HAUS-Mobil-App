@@ -50,3 +50,6 @@ app.*.map.json
 
 # Database
 database/*
+
+# Env
+.env
