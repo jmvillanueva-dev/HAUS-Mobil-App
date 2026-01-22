@@ -337,13 +337,13 @@ class WelcomePage extends StatelessWidget {
   }
 
   String _getInitials() {
-    if (user.displayName == null || user.displayName!.isEmpty) {
+    if (user.displayName.isEmpty) {
       return user.email.substring(0, 1).toUpperCase();
     }
-    final parts = user.displayName!.split(' ');
+    final parts = user.displayName.split(' ');
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
-    return user.displayName!.substring(0, 1).toUpperCase();
+    return user.displayName.substring(0, 1).toUpperCase();
   }
 }
