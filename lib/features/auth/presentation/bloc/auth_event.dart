@@ -91,3 +91,23 @@ class UpdateProfileRequested extends AuthEvent {
   List<Object?> get props =>
       [firstName, lastName, phone, bio, universityOrCompany, avatarUrl];
 }
+
+/// Evento de inicio de sesión social
+class SocialSignInRequested extends AuthEvent {
+  final dynamic provider; // OAuthProvider
+
+  const SocialSignInRequested(this.provider);
+
+  @override
+  List<Object> get props => [provider];
+}
+
+/// Evento de selección de rol post-login social
+class RoleSelected extends AuthEvent {
+  final String role;
+
+  const RoleSelected(this.role);
+
+  @override
+  List<Object> get props => [role];
+}

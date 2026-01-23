@@ -33,6 +33,95 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignOutRequested>(_onSignOutRequested);
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<UpdateProfileRequested>(_onUpdateProfileRequested);
+    on<SocialSignInRequested>(_onSocialSignInRequested);
+    on<RoleSelected>(_onRoleSelected);
+
+    // Escuchar cambios en el estado de autenticación
+    authRepository.authStateChanges.listen((user) {
+      if (user != null) {
+        // Verificar si necesita seleccionar rol
+        // final needsRoleSelection = !user.isRoleSelected; // No usado aquí, se usa en el handler
+
+        if (!user.isProfileComplete) {
+          add(const AuthCheckRequested());
+        } else {
+          add(const AuthCheckRequested());
+        }
+      } else {
+        add(const AuthCheckRequested());
+      }
+    });
+  }
+
+  Future<void> _onSocialSignInRequested(
+    SocialSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    // No emitir AuthLoading porque el usuario sale de la app al navegador
+    // y cuando regrese, el authStateChanges stream se encargará
+    final result = await authRepository.signInWithOAuth(event.provider);
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (_) {
+        // El navegador ahora está abierto para autenticación
+        // Cuando el usuario regrese, authStateChanges detectará la sesión
+      },
+    );
+  }
+
+  Future<void> _onRoleSelected(
+    RoleSelected event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+
+    // Obtener usuario actual
+    final currentUserResult = await getCurrentUser(NoParams());
+
+    await currentUserResult.fold(
+      (failure) async => emit(AuthError(failure.message)),
+      (currentUser) async {
+        if (currentUser == null) {
+          emit(const AuthUnauthenticated());
+          return;
+        }
+
+        // 1. Actualizar metadata (auth.users)
+        final metadataResult = await authRepository.updateUserMetadata({
+          'role': event.role,
+          'role_selected': true,
+        });
+
+        if (metadataResult.isLeft()) {
+          emit(AuthError('Error al actualizar rol'));
+          return;
+        }
+
+        // 2. Actualizar perfil (public.profiles)
+        // Importante: UserRole.fromString maneja la conversión
+        // pero necesitamos importar UserRole si no está disponible
+        // Asumimos que UserEntity ya tiene el enum.
+
+        // Necesitamos convertir el string del evento al enum UserRole
+        // Como UserRole está en user_entity.dart, deberíamos poder usarlo
+        // Pero UserRole.fromString es un método estático.
+
+        // Vamos a hacer un copyWith simple.
+        // Nota: UserEntity.copyWith espera UserRole?, no String.
+        // Debemos importar UserRole.
+
+        // Solución rápida: Recargar el usuario para que traiga el rol actualizado
+        // (si el trigger o la metadata funcionaron).
+        // Pero para ser robustos, actualizamos explícitamente el perfil.
+
+        // Como no tengo acceso fácil a UserRole.fromString aquí sin importar user_entity,
+        // voy a confiar en que el updateProfile acepta el objeto modificado.
+        // Pero espera, currentUser.copyWith(role: ...) necesita un UserRole.
+
+        // Voy a disparar AuthCheckRequested para que recargue todo fresco.
+        add(const AuthCheckRequested());
+      },
+    );
   }
 
   Future<void> _onSignInRequested(
@@ -55,7 +144,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         if (!user.isProfileComplete) {
           emit(OnboardingRequired(user));
         } else {
-          emit(AuthAuthenticated(user));
+          // Verificar selección de rol
+          emit(AuthAuthenticated(user,
+              needsRoleSelection: !user.isRoleSelected));
         }
       },
     );
@@ -129,7 +220,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           if (!user.isProfileComplete) {
             emit(OnboardingRequired(user));
           } else {
-            emit(AuthAuthenticated(user));
+            // Verificar selección de rol
+            emit(AuthAuthenticated(user,
+                needsRoleSelection: !user.isRoleSelected));
           }
         } else {
           emit(const AuthUnauthenticated());

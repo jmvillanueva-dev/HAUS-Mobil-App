@@ -28,6 +28,10 @@ abstract class AuthRemoteDataSource {
 
   Future<void> updateProfile(UserModel user);
 
+  Future<void> updateUserMetadata(Map<String, dynamic> data);
+
+  Future<bool> signInWithOAuth(OAuthProvider provider);
+
   Stream<UserModel?> get authStateChanges;
 }
 
@@ -36,6 +40,35 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final SupabaseClient supabaseClient;
 
   AuthRemoteDataSourceImpl(this.supabaseClient);
+
+  @override
+  Future<bool> signInWithOAuth(OAuthProvider provider) async {
+    try {
+      final result = await supabaseClient.auth.signInWithOAuth(
+        provider,
+        redirectTo: 'hausapp://callback',
+      );
+      return result;
+    } on AuthException catch (e) {
+      throw Exception('Error de autenticación social: ${e.message}');
+    } catch (e) {
+      throw Exception('Error desconocido en login social: $e');
+    }
+  }
+
+  @override
+  Future<void> updateUserMetadata(Map<String, dynamic> data) async {
+    try {
+      final user = supabaseClient.auth.currentUser;
+      if (user == null) throw Exception('No hay usuario autenticado');
+
+      await supabaseClient.auth.updateUser(
+        UserAttributes(data: data),
+      );
+    } catch (e) {
+      throw Exception('Error al actualizar metadata: $e');
+    }
+  }
 
   @override
   Future<UserModel> signInWithEmailAndPassword({

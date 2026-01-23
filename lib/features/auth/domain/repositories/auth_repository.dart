@@ -36,6 +36,12 @@ abstract class AuthRepository {
   /// Actualizar perfil del usuario actual
   Future<Either<Failure, void>> updateProfile(UserEntity user);
 
+  /// Iniciar sesión con proveedor social (Google/Facebook)
+  Future<Either<Failure, bool>> signInWithOAuth(dynamic provider);
+
+  /// Actualizar metadata del usuario (auth.users)
+  Future<Either<Failure, void>> updateUserMetadata(Map<String, dynamic> data);
+
   /// Stream de cambios en el estado de autenticación
   Stream<UserEntity?> get authStateChanges;
 }

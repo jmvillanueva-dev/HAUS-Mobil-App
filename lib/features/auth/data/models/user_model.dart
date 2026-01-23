@@ -16,6 +16,7 @@ class UserModel extends UserEntity {
     super.verificationStatus,
     super.universityOrCompany,
     super.verificationDocUrl,
+    super.isRoleSelected,
     super.createdAt,
     super.updatedAt,
   });
@@ -48,6 +49,8 @@ class UserModel extends UserEntity {
       phone: metadata['phone'] as String?,
       avatarUrl: metadata['avatar_url'] as String?,
       role: UserRole.fromString(metadata['role'] as String?),
+      isRoleSelected:
+          metadata.containsKey('role') || metadata.containsKey('role_selected'),
       createdAt: DateTime.tryParse(user.createdAt),
     );
   }
@@ -69,6 +72,9 @@ class UserModel extends UserEntity {
           VerificationStatus.fromString(json['status'] as String?),
       universityOrCompany: json['university_or_company'] as String?,
       verificationDocUrl: json['verification_doc_url'] as String?,
+      // Si solo tenemos el perfil, asumimos que el rol es válido,
+      // pero idealmente siempre deberíamos tener el usuario de auth.
+      isRoleSelected: true,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
@@ -85,6 +91,8 @@ class UserModel extends UserEntity {
       return UserModel.fromSupabaseUser(authUser);
     }
 
+    final metadata = authUser.userMetadata ?? {};
+
     return UserModel(
       id: authUser.id,
       email: authUser.email ?? '',
@@ -98,6 +106,8 @@ class UserModel extends UserEntity {
           VerificationStatus.fromString(profile['status'] as String?),
       universityOrCompany: profile['university_or_company'] as String?,
       verificationDocUrl: profile['verification_doc_url'] as String?,
+      isRoleSelected:
+          metadata.containsKey('role') || metadata.containsKey('role_selected'),
       createdAt: DateTime.tryParse(authUser.createdAt),
       updatedAt: profile['updated_at'] != null
           ? DateTime.tryParse(profile['updated_at'] as String)
@@ -148,6 +158,7 @@ class UserModel extends UserEntity {
       verificationStatus: verificationStatus,
       universityOrCompany: universityOrCompany,
       verificationDocUrl: verificationDocUrl,
+      isRoleSelected: isRoleSelected,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -167,6 +178,7 @@ class UserModel extends UserEntity {
       verificationStatus: entity.verificationStatus,
       universityOrCompany: entity.universityOrCompany,
       verificationDocUrl: entity.verificationDocUrl,
+      isRoleSelected: entity.isRoleSelected,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );

@@ -138,6 +138,38 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, bool>> signInWithOAuth(dynamic provider) async {
+    if (!await networkInfo.isConnected) {
+      return const Left(NetworkFailure('Sin conexión a internet'));
+    }
+
+    try {
+      final result =
+          await remoteDataSource.signInWithOAuth(provider as OAuthProvider);
+      return Right(result);
+    } on AuthException catch (e) {
+      return Left(AuthFailure(_mapAuthErrorMessage(e.message)));
+    } catch (e) {
+      return Left(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateUserMetadata(
+      Map<String, dynamic> data) async {
+    if (!await networkInfo.isConnected) {
+      return const Left(NetworkFailure('Sin conexión a internet'));
+    }
+
+    try {
+      await remoteDataSource.updateUserMetadata(data);
+      return const Right(null);
+    } catch (e) {
+      return Left(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
   Stream<UserEntity?> get authStateChanges {
     return remoteDataSource.authStateChanges;
   }

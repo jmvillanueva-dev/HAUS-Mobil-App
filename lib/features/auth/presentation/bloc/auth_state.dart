@@ -18,11 +18,12 @@ class AuthLoading extends AuthState {
 
 class AuthAuthenticated extends AuthState {
   final UserEntity user;
+  final bool needsRoleSelection;
 
-  const AuthAuthenticated(this.user);
+  const AuthAuthenticated(this.user, {this.needsRoleSelection = false});
 
   @override
-  List<Object> get props => [user];
+  List<Object> get props => [user, needsRoleSelection];
 }
 
 class AuthUnauthenticated extends AuthState {

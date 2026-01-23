@@ -94,6 +94,9 @@ class UserEntity extends Equatable {
   /// URL del documento de verificación
   final String? verificationDocUrl;
 
+  /// Indica si el usuario ha seleccionado su rol explícitamente
+  final bool isRoleSelected;
+
   /// Fecha de creación de la cuenta
   final DateTime? createdAt;
 
@@ -112,6 +115,8 @@ class UserEntity extends Equatable {
     this.verificationStatus = VerificationStatus.unverified,
     this.universityOrCompany,
     this.verificationDocUrl,
+    this.isRoleSelected =
+        true, // Por defecto true para no romper lógica existente
     this.createdAt,
     this.updatedAt,
   });
@@ -154,6 +159,7 @@ class UserEntity extends Equatable {
     VerificationStatus? verificationStatus,
     String? universityOrCompany,
     String? verificationDocUrl,
+    bool? isRoleSelected,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -169,6 +175,7 @@ class UserEntity extends Equatable {
       verificationStatus: verificationStatus ?? this.verificationStatus,
       universityOrCompany: universityOrCompany ?? this.universityOrCompany,
       verificationDocUrl: verificationDocUrl ?? this.verificationDocUrl,
+      isRoleSelected: isRoleSelected ?? this.isRoleSelected,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -187,6 +194,7 @@ class UserEntity extends Equatable {
         verificationStatus,
         universityOrCompany,
         verificationDocUrl,
+        isRoleSelected,
         createdAt,
         updatedAt,
       ];

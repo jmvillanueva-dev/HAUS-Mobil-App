@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -8,6 +9,7 @@ import '../bloc/auth_state.dart';
 import '../widgets/loading_overlay.dart';
 import 'reset_password_page.dart';
 import 'role_selection_page.dart';
+import 'social_role_selection_page.dart';
 import 'onboarding_page.dart';
 import '../../../home/presentation/pages/main_page.dart';
 
@@ -21,6 +23,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+// ... (omitted unchanged parts)
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _emailFocusNode = FocusNode();
@@ -164,11 +168,19 @@ class _LoginPageState extends State<LoginPage>
               ),
             );
           } else if (state is AuthAuthenticated) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => MainPage(user: state.user),
-              ),
-            );
+            if (state.needsRoleSelection) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => const SocialRoleSelectionPage(),
+                ),
+              );
+            } else {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => MainPage(user: state.user),
+                ),
+              );
+            }
           }
         },
         builder: (context, state) {
@@ -665,14 +677,24 @@ class _LoginPageState extends State<LoginPage>
         _SocialIconButton(
           icon: 'G',
           isText: true,
-          onTap: () => _showSocialSnackBar('Google'),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context
+                .read<AuthBloc>()
+                .add(const SocialSignInRequested(OAuthProvider.google));
+          },
         ),
         const SizedBox(width: 16),
         // Facebook
         _SocialIconButton(
           icon: Icons.facebook,
           iconColor: const Color(0xFF1877F2),
-          onTap: () => _showSocialSnackBar('Facebook'),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context
+                .read<AuthBloc>()
+                .add(const SocialSignInRequested(OAuthProvider.facebook));
+          },
         ),
         const SizedBox(width: 16),
         // X (Twitter)
