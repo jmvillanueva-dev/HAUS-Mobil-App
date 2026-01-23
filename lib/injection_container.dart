@@ -8,6 +8,7 @@ import 'core/constants/app_constants.dart';
 import 'injection_container.config.dart';
 
 final getIt = GetIt.instance;
+final sl = GetIt.instance;
 
 @InjectableInit()
 Future<void> configureDependencies() async {
@@ -36,6 +37,8 @@ Future<void> configureDependencies() async {
   // Register external dependencies
   getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
+
+  
 
   // Initialize injectable
   getIt.init();

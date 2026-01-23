@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../injection_container.dart'; // Para sl()
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart'; // Para verificar estados del usuario
+import '../bloc/listing_bloc.dart';
+import 'create_listing_page.dart';
 
 /// Tab de Publicar - Crear publicación de habitación
 class PublishTab extends StatelessWidget {
@@ -45,20 +51,20 @@ class PublishTab extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppTheme.primaryColor.withValues(alpha: 0.2),
-                          AppTheme.primaryColor.withValues(alpha: 0.05),
+                          AppTheme.primaryColor.withOpacity(0.2),
+                          AppTheme.primaryColor.withOpacity(0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(32),
                       border: Border.all(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        color: AppTheme.primaryColor.withOpacity(0.3),
                         width: 2,
                       ),
                     ),
                     child: Icon(
                       Icons.add_home_rounded,
                       size: 64,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                      color: AppTheme.primaryColor.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -109,7 +115,7 @@ class PublishTab extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                    color: AppTheme.primaryColor.withOpacity(0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -117,7 +123,7 @@ class PublishTab extends StatelessWidget {
               ),
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Navigate to create listing flow
+                  _navigateToCreateListing(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -146,6 +152,39 @@ class PublishTab extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _navigateToCreateListing(BuildContext context) {
+    // 1. Obtener el estado actual de la autenticación
+    final authState = context.read<AuthBloc>().state;
+    String? userId;
+
+    // 2. Extraer el ID según el tipo de estado
+    if (authState is AuthAuthenticated) {
+      userId = authState.user.id;
+    } else if (authState is ProfileUpdated) {
+      userId = authState.user.id;
+    }
+
+    // 3. Navegar si tenemos usuario, sino mostrar error
+    if (userId != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => sl<ListingBloc>(), // Inyección del Bloc
+            child: CreateListingPage(userId: userId!),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: No se pudo identificar al usuario actual.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildFeature(IconData icon, String label) {
