@@ -289,6 +289,7 @@ class WelcomePage extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
+                            padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -299,6 +300,7 @@ class WelcomePage extends StatelessWidget {
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: AppTheme.backgroundDark,
+                              height: 1.2,
                             ),
                           ),
                         ),
@@ -322,6 +324,7 @@ class WelcomePage extends StatelessWidget {
                           style: TextStyle(
                             color: AppTheme.textSecondaryDark,
                             fontSize: 13,
+                            height: 1.2,
                           ),
                         ),
                       ),

@@ -615,6 +615,7 @@ class _LoginPageState extends State<LoginPage>
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
+          padding: EdgeInsets.zero, // Remove default padding
         ),
         child: Text(
           isLoading ? 'Cargando...' : 'Iniciar Sesión',
@@ -622,6 +623,7 @@ class _LoginPageState extends State<LoginPage>
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: AppTheme.backgroundDark,
+            height: 1.2, // Fix clipping
           ),
         ),
       ),
@@ -660,7 +662,7 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildSocialText() {
     return Center(
       child: Text(
-        'Continúa con tu red social favorita',
+        'O continúa con Google',
         style: TextStyle(
           color: AppTheme.textSecondaryDark,
           fontSize: 14,
@@ -670,58 +672,63 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildSocialButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Google
-        _SocialIconButton(
-          icon: 'G',
-          isText: true,
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
             context
                 .read<AuthBloc>()
                 .add(const SocialSignInRequested(OAuthProvider.google));
           },
-        ),
-        const SizedBox(width: 16),
-        // Facebook
-        _SocialIconButton(
-          icon: Icons.facebook,
-          iconColor: const Color(0xFF1877F2),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            context
-                .read<AuthBloc>()
-                .add(const SocialSignInRequested(OAuthProvider.facebook));
-          },
-        ),
-        const SizedBox(width: 16),
-        // X (Twitter)
-        _SocialIconButton(
-          icon: 'X',
-          isText: true,
-          onTap: () => _showSocialSnackBar('X'),
-        ),
-        const SizedBox(width: 16),
-        // Apple
-        _SocialIconButton(
-          icon: Icons.apple_rounded,
-          onTap: () => _showSocialSnackBar('Apple'),
-        ),
-      ],
-    );
-  }
-
-  void _showSocialSnackBar(String provider) {
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Próximamente: Iniciar con $provider'),
-        backgroundColor: AppTheme.surfaceDarkElevated,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceDark,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.borderDark,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.rectangle,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'G',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontFamily: 'Roboto',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Iniciar sesión con Google',
+                  style: TextStyle(
+                    color: AppTheme.textPrimaryDark,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2, // Fix clipping
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -778,91 +785,6 @@ class _LoginPageState extends State<LoginPage>
             ),
             const TextSpan(text: '.'),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Social icon button widget
-class _SocialIconButton extends StatefulWidget {
-  final dynamic icon;
-  final bool isText;
-  final Color? iconColor;
-  final VoidCallback onTap;
-
-  const _SocialIconButton({
-    required this.icon,
-    this.isText = false,
-    this.iconColor,
-    required this.onTap,
-  });
-
-  @override
-  State<_SocialIconButton> createState() => _SocialIconButtonState();
-}
-
-class _SocialIconButtonState extends State<_SocialIconButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceDark,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppTheme.borderDark,
-              width: 1,
-            ),
-          ),
-          child: Center(
-            child: widget.isText
-                ? Text(
-                    widget.icon as String,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: widget.iconColor ?? AppTheme.textPrimaryDark,
-                    ),
-                  )
-                : Icon(
-                    widget.icon as IconData,
-                    size: 28,
-                    color: widget.iconColor ?? AppTheme.textPrimaryDark,
-                  ),
-          ),
         ),
       ),
     );

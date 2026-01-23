@@ -416,6 +416,7 @@ class _RegisterPageState extends State<RegisterPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
+          padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -426,6 +427,7 @@ class _RegisterPageState extends State<RegisterPage> {
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: AppTheme.backgroundDark,
+            height: 1.2,
           ),
         ),
       ),
