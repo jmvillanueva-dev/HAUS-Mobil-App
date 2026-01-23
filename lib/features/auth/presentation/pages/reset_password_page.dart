@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -36,13 +37,18 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: Theme.of(context).colorScheme.error,
+                backgroundColor: AppTheme.errorColor,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             );
           } else if (state is ResetPasswordSent) {
@@ -51,7 +57,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 content: const Text(
                   'Se ha enviado un correo de recuperación. Por favor revisa tu bandeja de entrada.',
                 ),
-                backgroundColor: Colors.green,
+                backgroundColor: AppTheme.successColor,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 duration: const Duration(seconds: 5),
               ),
             );
@@ -73,37 +83,32 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Back button
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
+                        // Hero Icon
+                        _buildHeroIcon(),
 
-                        // Logo o icono
-                        Icon(
-                          Icons.lock_reset_rounded,
-                          size: 80,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
 
-                        // Título
-                        Text(
+                        // Title
+                        const Text(
                           'Recuperar contraseña',
-                          style: Theme.of(context).textTheme.displayMedium,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimaryDark,
+                          ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text(
                           'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña',
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondaryDark,
+                            height: 1.5,
+                          ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 32),
 
                         // Email field
                         CustomTextField(
@@ -111,13 +116,16 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           label: 'Correo electrónico',
                           hint: 'tu@email.com',
                           prefixIcon: Icons.email_outlined,
+                          iconColor: AppTheme.primaryColor,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Por favor ingresa tu correo';
                             }
-                            if (!value.contains('@')) {
-                              return 'Por favor ingresa un correo válido';
+                            final emailRegex =
+                                RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                            if (!emailRegex.hasMatch(value)) {
+                              return 'Ingresa un correo válido';
                             }
                             return null;
                           },
@@ -125,34 +133,86 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         const SizedBox(height: 32),
 
                         // Send button
-                        SizedBox(
+                        Container(
                           height: 56,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppTheme.primaryColor,
+                                AppTheme.primaryDark,
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryColor
+                                    .withValues(alpha: 0.4),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
                           child: ElevatedButton(
                             onPressed: isLoading ? null : _handleResetPassword,
-                            child: const Text('Enviar enlace de recuperación'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Enviar enlace',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.backgroundDark,
+                              ),
+                            ),
                           ),
                         ),
+
                         const SizedBox(height: 24),
 
                         // Info card
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  color: Theme.of(context).colorScheme.primary,
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceDark,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color:
+                                  AppTheme.primaryColor.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor
+                                      .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Recibirás un enlace para crear una nueva contraseña',
-                                    style: Theme.of(context).textTheme.bodyMedium,
+                                child: const Icon(
+                                  Icons.info_outline_rounded,
+                                  color: AppTheme.primaryColor,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  'Recibirás un enlace para crear una nueva contraseña',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.textSecondaryDark,
+                                    height: 1.4,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -163,6 +223,87 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildHeroIcon() {
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer glow ring
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                width: 2,
+              ),
+            ),
+          ),
+          // Main icon container
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(12),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primaryColor,
+                  AppTheme.primaryDark,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.lock_reset_rounded,
+              size: 34,
+              color: Colors.white,
+            ),
+          ),
+          // Small badge
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppTheme.primaryColor,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.question_mark_rounded,
+                size: 14,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
