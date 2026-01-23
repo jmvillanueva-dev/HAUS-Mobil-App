@@ -2,7 +2,7 @@ name: haus_app
 description: "Plataforma inteligente para encontrar roomies o habitaciones disponibles."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -66,7 +66,7 @@ dependencies:
 
   # Network
   connectivity_plus: ^6.1.2
-  
+
   # Path utilities
   path: ^1.9.0
 
@@ -83,7 +83,7 @@ dependencies:
   url_launcher: ^6.3.1
 
   # UI
-  google_fonts: ^6.2.1
+  google_fonts: ^7.1.0
   flutter_svg: ^2.0.10+1
   shimmer: ^3.0.0
 
@@ -96,7 +96,8 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints:
+    ^5.0.0
 
     # Code Generation
   build_runner: ^2.4.13
@@ -107,7 +108,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

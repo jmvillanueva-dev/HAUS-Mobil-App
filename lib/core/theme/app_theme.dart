@@ -8,13 +8,13 @@ class AppTheme {
   // COLORES PRINCIPALES
   // ============================================
 
-  /// Teal/Turquesa - Color primario para acciones y acentos
+  /// Turquesa/Teal - Color primario para acciones y acentos
   static const Color primaryColor = Color(0xFF2DD4BF);
 
-  /// Teal oscuro para variantes del primario
+  /// Turquesa oscuro para variantes del primario
   static const Color primaryDark = Color(0xFF14B8A6);
 
-  /// Teal claro para estados hover/pressed
+  /// Turquesa claro para estados hover/pressed
   static const Color primaryLight = Color(0xFF5EEAD4);
 
   /// Verde Lima - Color secundario para badges y verificación
@@ -24,59 +24,37 @@ class AppTheme {
   static const Color secondaryDark = Color(0xFFA3E635);
 
   // ============================================
-  // COLORES DE FONDO - DARK MODE
+  // COLORES DE FONDO - TEMA PRINCIPAL
   // ============================================
 
-  /// Fondo principal oscuro
+  /// Fondo principal - Negro
   static const Color backgroundDark = Color(0xFF0D0D0D);
 
-  /// Superficies elevadas (cards, modals)
+  /// Superficies elevadas (cards, modals) - Gris oscuro
   static const Color surfaceDark = Color(0xFF1A1A1A);
 
-  /// Superficie elevada secundaria
+  /// Superficie elevada secundaria - Gris oscuro más claro
   static const Color surfaceDarkElevated = Color(0xFF262626);
-
-  // ============================================
-  // COLORES DE FONDO - LIGHT MODE
-  // ============================================
-
-  /// Fondo principal claro
-  static const Color backgroundLight = Color(0xFFFAFAFA);
-
-  /// Superficies en light mode
-  static const Color surfaceLight = Color(0xFFFFFFFF);
-
-  /// Superficie con sombra sutil
-  static const Color surfaceLightElevated = Color(0xFFF5F5F5);
 
   // ============================================
   // COLORES DE TEXTO
   // ============================================
 
-  /// Texto principal en dark mode
+  /// Texto principal - Blanco
   static const Color textPrimaryDark = Color(0xFFFFFFFF);
 
-  /// Texto secundario en dark mode
+  /// Texto secundario - Gris claro
   static const Color textSecondaryDark = Color(0xFF9CA3AF);
 
-  /// Texto terciario/disabled en dark mode
+  /// Texto terciario/disabled - Gris medio
   static const Color textTertiaryDark = Color(0xFF6B7280);
-
-  /// Texto principal en light mode
-  static const Color textPrimaryLight = Color(0xFF1F2937);
-
-  /// Texto secundario en light mode
-  static const Color textSecondaryLight = Color(0xFF6B7280);
-
-  /// Texto terciario en light mode
-  static const Color textTertiaryLight = Color(0xFF9CA3AF);
 
   // ============================================
   // COLORES SEMÁNTICOS
   // ============================================
 
   /// Error/Alerta
-  static const Color errorColor = Color(0xFFFF6B6B);
+  static const Color errorColor = Color(0xFFEF4444);
 
   /// Éxito/Confirmación
   static const Color successColor = Color(0xFF22C55E);
@@ -108,9 +86,7 @@ class AppTheme {
   // ============================================
 
   static const Color borderDark = Color(0xFF374151);
-  static const Color borderLight = Color(0xFFE5E7EB);
   static const Color dividerDark = Color(0xFF1F2937);
-  static const Color dividerLight = Color(0xFFE5E7EB);
 
   // ============================================
   // TEMA OSCURO (Principal)
@@ -136,7 +112,7 @@ class AppTheme {
       scaffoldBackgroundColor: backgroundDark,
 
       // Tipografía
-      textTheme: _buildTextTheme(isDark: true),
+      textTheme: _buildTextTheme(),
 
       // AppBar
       appBarTheme: AppBarTheme(
@@ -348,236 +324,12 @@ class AppTheme {
   }
 
   // ============================================
-  // TEMA CLARO (Alternativo)
-  // ============================================
-
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: const ColorScheme.light(
-        primary: primaryColor,
-        primaryContainer: primaryLight,
-        secondary: secondaryColor,
-        secondaryContainer: secondaryDark,
-        surface: surfaceLight,
-        error: errorColor,
-        onPrimary: Colors.white,
-        onSecondary: textPrimaryLight,
-        onSurface: textPrimaryLight,
-        onError: Colors.white,
-        outline: borderLight,
-      ),
-      scaffoldBackgroundColor: backgroundLight,
-
-      // Tipografía
-      textTheme: _buildTextTheme(isDark: false),
-
-      // AppBar
-      appBarTheme: AppBarTheme(
-        backgroundColor: surfaceLight,
-        foregroundColor: textPrimaryLight,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: GoogleFonts.inter(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryLight,
-        ),
-      ),
-
-      // Botones elevados
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-          textStyle: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-
-      // Botones con borde
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: textPrimaryLight,
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          side: const BorderSide(color: borderLight, width: 1.5),
-          textStyle: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-
-      // Campos de texto
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: surfaceLight,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 18,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: borderLight),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: borderLight),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: errorColor, width: 1.5),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: errorColor, width: 2),
-        ),
-        labelStyle: GoogleFonts.inter(
-          color: textSecondaryLight,
-          fontSize: 14,
-        ),
-        hintStyle: GoogleFonts.inter(
-          color: textTertiaryLight,
-          fontSize: 14,
-        ),
-        prefixIconColor: textSecondaryLight,
-        suffixIconColor: textSecondaryLight,
-      ),
-
-      // Cards
-      cardTheme: CardThemeData(
-        color: surfaceLight,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: borderLight, width: 0.5),
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-
-      // Bottom Navigation
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: surfaceLight,
-        selectedItemColor: primaryColor,
-        unselectedItemColor: textSecondaryLight,
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-      ),
-
-      // Navigation Bar (Material 3)
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surfaceLight,
-        indicatorColor: primaryColor.withValues(alpha: 0.15),
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: primaryColor);
-          }
-          return const IconThemeData(color: textSecondaryLight);
-        }),
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: primaryColor,
-            );
-          }
-          return GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: textSecondaryLight,
-          );
-        }),
-      ),
-
-      // Floating Action Button
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: CircleBorder(),
-      ),
-
-      // Chips
-      chipTheme: ChipThemeData(
-        backgroundColor: surfaceLightElevated,
-        selectedColor: primaryColor.withValues(alpha: 0.15),
-        labelStyle: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: textPrimaryLight,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: borderLight),
-        ),
-      ),
-
-      // Divider
-      dividerTheme: const DividerThemeData(
-        color: dividerLight,
-        thickness: 1,
-        space: 1,
-      ),
-
-      // SnackBar
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: textPrimaryLight,
-        contentTextStyle: GoogleFonts.inter(
-          color: surfaceLight,
-          fontSize: 14,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
-
-      // Dialog
-      dialogTheme: DialogThemeData(
-        backgroundColor: surfaceLight,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        titleTextStyle: GoogleFonts.inter(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryLight,
-        ),
-      ),
-
-      // Bottom Sheet
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: surfaceLight,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-      ),
-    );
-  }
-
-  // ============================================
   // HELPER: Construir tema de texto
   // ============================================
 
-  static TextTheme _buildTextTheme({required bool isDark}) {
-    final Color primaryText = isDark ? textPrimaryDark : textPrimaryLight;
-    final Color secondaryText = isDark ? textSecondaryDark : textSecondaryLight;
+  static TextTheme _buildTextTheme() {
+    const Color primaryText = textPrimaryDark;
+    const Color secondaryText = textSecondaryDark;
 
     return TextTheme(
       // Display
