@@ -16,15 +16,36 @@ class RoleSelectionPage extends StatelessWidget {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              // Header
-              _buildHeader(context),
-
               const Spacer(),
 
               // Title section
-              _buildTitle(context),
+              _buildSelectionIcon(),
 
-              SizedBox(height: size.height * 0.06),
+              const SizedBox(height: 20),
+
+              const Text(
+                '¿Cuál es tu perfil?',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimaryDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                'Esto nos ayudará a mostrarte roomies\nque se ajusten a tu estilo de vida',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondaryDark,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              SizedBox(height: size.height * 0.04),
 
               // Role cards
               _RoleCard(
@@ -63,12 +84,12 @@ class RoleSelectionPage extends StatelessWidget {
                 },
               ),
 
-              const Spacer(),
+              const SizedBox(height: 32),
 
               // Info text
               _buildInfoText(),
 
-              const SizedBox(height: 16),
+              const Spacer(),
             ],
           ),
         ),
@@ -76,108 +97,84 @@ class RoleSelectionPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.borderDark,
-              width: 1,
+  Widget _buildSelectionIcon() {
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer glow ring
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                width: 2,
+              ),
             ),
           ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 20,
-            ),
-            color: AppTheme.textPrimaryDark,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        const Spacer(),
-        // Mini logo
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+          // Main icon container
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primaryColor,
+                  AppTheme.primaryDark,
+                ],
               ),
-              child: const Icon(
-                Icons.home_rounded,
-                size: 20,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'HAUS',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-                letterSpacing: 2,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTitle(BuildContext context) {
-    return Column(
-      children: [
-        // Icono principal
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.primaryColor.withValues(alpha: 0.2),
-                AppTheme.primaryColor.withValues(alpha: 0.05),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
               ],
             ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
-              width: 1,
+            child: const Icon(
+              Icons.person_rounded,
+              size: 34,
+              color: Colors.white,
             ),
           ),
-          child: const Icon(
-            Icons.person_search_rounded,
-            size: 40,
-            color: AppTheme.primaryColor,
+          // Small lock badge
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppTheme.primaryColor,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.question_mark_rounded,
+                size: 14,
+                color: AppTheme.primaryColor,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
-        const Text(
-          '¿Cuál es tu perfil?',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryDark,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Esto nos ayudará a mostrarte roomies\nque se ajusten a tu estilo de vida',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppTheme.textSecondaryDark,
-            height: 1.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -216,12 +213,12 @@ class _RoleCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppTheme.surfaceDark,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: gradient[0].withValues(alpha: 0.3),
               width: 1,
@@ -229,8 +226,8 @@ class _RoleCard extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: gradient[0].withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -238,26 +235,26 @@ class _RoleCard extends StatelessWidget {
             children: [
               // Icon container with gradient
               Container(
-                width: 56,
-                height: 56,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: gradient,
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: gradient[0].withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Icon(
                   icon,
-                  size: 28,
+                  size: 24,
                   color: isSecondary ? AppTheme.backgroundDark : Colors.white,
                 ),
               ),
@@ -269,16 +266,16 @@ class _RoleCard extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.textPrimaryDark,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: AppTheme.textSecondaryDark,
                       ),
                     ),
@@ -286,15 +283,15 @@ class _RoleCard extends StatelessWidget {
                 ),
               ),
               Container(
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: gradient[0].withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.arrow_forward_rounded,
-                  size: 20,
+                  size: 18,
                   color: gradient[0],
                 ),
               ),

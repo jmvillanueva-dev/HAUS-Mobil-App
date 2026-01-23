@@ -53,12 +53,20 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  String get _roleDisplayName {
-    return widget.role == 'student' ? 'Estudiante' : 'Trabajador';
-  }
-
   IconData get _roleIcon {
     return widget.role == 'student' ? Icons.school_rounded : Icons.work_rounded;
+  }
+
+  Color get _themeColor {
+    return widget.role == 'worker'
+        ? AppTheme.secondaryColor
+        : AppTheme.primaryColor;
+  }
+
+  Color get _themeDarkColor {
+    return widget.role == 'worker'
+        ? AppTheme.secondaryDark
+        : AppTheme.primaryDark;
   }
 
   @override
@@ -95,105 +103,129 @@ class _RegisterPageState extends State<RegisterPage> {
         builder: (context, state) {
           final isLoading = state is AuthLoading;
 
-          return LoadingOverlay(
-            isLoading: isLoading,
-            child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
-
-                      // Header con botón de regreso
-                      _buildHeader(),
-
-                      const SizedBox(height: 32),
-
-                      // Role badge
-                      _buildRoleBadge(),
-
-                      const SizedBox(height: 24),
-
-                      // Title
-                      _buildTitle(),
-
-                      const SizedBox(height: 32),
-
-                      // Name fields (row)
-                      _buildNameFields(),
-
-                      const SizedBox(height: 16),
-
-                      // Email field
-                      CustomTextField(
-                        controller: _emailController,
-                        label: 'Correo electrónico',
-                        hint: 'tu@email.com',
-                        prefixIcon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu correo';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Por favor ingresa un correo válido';
-                          }
-                          return null;
-                        },
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                    primary: _themeColor,
+                  ),
+              textSelectionTheme: TextSelectionThemeData(
+                cursorColor: _themeColor,
+                selectionColor: _themeColor.withValues(alpha: 0.3),
+                selectionHandleColor: _themeColor,
+              ),
+              inputDecorationTheme:
+                  Theme.of(context).inputDecorationTheme.copyWith(
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: _themeColor, width: 2),
+                        ),
                       ),
-                      const SizedBox(height: 16),
+            ),
+            child: LoadingOverlay(
+              isLoading: isLoading,
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 24),
 
-                      // Password field
-                      CustomTextField(
-                        controller: _passwordController,
-                        label: 'Contraseña',
-                        hint: 'Mínimo 6 caracteres',
-                        prefixIcon: Icons.lock_outline,
-                        isPassword: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa una contraseña';
-                          }
-                          if (value.length < 6) {
-                            return 'La contraseña debe tener al menos 6 caracteres';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                        // Header con botón de regreso
+                        _buildHeader(),
 
-                      // Confirm password field
-                      CustomTextField(
-                        controller: _confirmPasswordController,
-                        label: 'Confirmar contraseña',
-                        hint: 'Repite tu contraseña',
-                        prefixIcon: Icons.lock_outline,
-                        isPassword: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor confirma tu contraseña';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'Las contraseñas no coinciden';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 32),
+                        const SizedBox(height: 16),
 
-                      // Register button
-                      _buildRegisterButton(isLoading),
+                        // Register icon
+                        _buildRegisterIcon(),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Info text
-                      _buildInfoText(),
+                        // Title
+                        _buildTitle(),
 
-                      const SizedBox(height: 24),
-                    ],
+                        const SizedBox(height: 24),
+
+                        // Name fields (row)
+                        _buildNameFields(),
+
+                        const SizedBox(height: 12),
+
+                        // Email field
+                        CustomTextField(
+                          controller: _emailController,
+                          label: 'Correo electrónico',
+                          hint: 'tu@email.com',
+                          prefixIcon: Icons.email_outlined,
+                          iconColor: _themeColor,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor ingresa tu correo';
+                            }
+                            final emailRegex =
+                                RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                            if (!emailRegex.hasMatch(value)) {
+                              return 'Ingresa un correo válido';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Password field
+                        CustomTextField(
+                          controller: _passwordController,
+                          label: 'Contraseña',
+                          hint: 'Mínimo 6 caracteres',
+                          prefixIcon: Icons.lock_outline,
+                          iconColor: _themeColor,
+                          isPassword: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor ingresa una contraseña';
+                            }
+                            if (value.length < 6) {
+                              return 'La contraseña debe tener al menos 6 caracteres';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Confirm password field
+                        CustomTextField(
+                          controller: _confirmPasswordController,
+                          label: 'Confirmar contraseña',
+                          hint: 'Repite tu contraseña',
+                          prefixIcon: Icons.lock_outline,
+                          iconColor: _themeColor,
+                          isPassword: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor confirma tu contraseña';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Las contraseñas no coinciden';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Register button
+                        _buildRegisterButton(isLoading),
+
+                        const SizedBox(height: 12),
+
+                        // Info text
+                        _buildInfoText(),
+
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -205,94 +237,88 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.borderDark,
-              width: 1,
-            ),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 20,
-            ),
-            color: AppTheme.textPrimaryDark,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        const Spacer(),
-        // Mini logo
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.home_rounded,
-                size: 20,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'HAUS',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-                letterSpacing: 2,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+    return const SizedBox.shrink();
   }
 
-  Widget _buildRoleBadge() {
+  Widget _buildRegisterIcon() {
     return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primaryColor.withValues(alpha: 0.2),
-              AppTheme.primaryColor.withValues(alpha: 0.05),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: AppTheme.primaryColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _roleIcon,
-              size: 20,
-              color: AppTheme.primaryColor,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Registro como $_roleDisplayName',
-              style: const TextStyle(
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer glow ring
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _themeColor.withValues(alpha: 0.3),
+                width: 2,
               ),
             ),
-          ],
-        ),
+          ),
+          // Main icon container
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _themeColor,
+                  _themeDarkColor,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _themeColor.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(
+              _roleIcon,
+              size: 28,
+              color: widget.role == 'worker'
+                  ? AppTheme.backgroundDark
+                  : Colors.white,
+            ),
+          ),
+          // Small plus badge
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _themeColor,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.add_rounded,
+                size: 16,
+                color: _themeColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -303,17 +329,17 @@ class _RegisterPageState extends State<RegisterPage> {
         const Text(
           'Crea tu cuenta',
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
             color: AppTheme.textPrimaryDark,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           'Completa tus datos para comenzar a buscar tu roomie ideal',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             color: AppTheme.textSecondaryDark,
           ),
           textAlign: TextAlign.center,
@@ -331,9 +357,13 @@ class _RegisterPageState extends State<RegisterPage> {
             label: 'Nombre',
             hint: 'Tu nombre',
             prefixIcon: Icons.person_outline,
+            iconColor: _themeColor,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Requerido';
+              }
+              if (value.length < 2) {
+                return 'Mínimo 2 letras';
               }
               return null;
             },
@@ -346,9 +376,13 @@ class _RegisterPageState extends State<RegisterPage> {
             label: 'Apellido',
             hint: 'Tu apellido',
             prefixIcon: Icons.person_outline,
+            iconColor: _themeColor,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Requerido';
+              }
+              if (value.length < 2) {
+                return 'Mínimo 2 letras';
               }
               return null;
             },
@@ -360,18 +394,18 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildRegisterButton(bool isLoading) {
     return Container(
-      height: 56,
+      height: 48,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [
-            AppTheme.primaryColor,
-            AppTheme.primaryDark,
+            _themeColor,
+            _themeDarkColor,
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+            color: _themeColor.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -386,7 +420,7 @@ class _RegisterPageState extends State<RegisterPage> {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: const Text(
+        child: Text(
           'Crear cuenta',
           style: TextStyle(
             fontSize: 16,
@@ -400,7 +434,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildInfoText() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.surfaceDark,
         borderRadius: BorderRadius.circular(12),
@@ -412,15 +446,15 @@ class _RegisterPageState extends State<RegisterPage> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: AppTheme.infoColor.withValues(alpha: 0.1),
+              color: _themeColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.info_outline_rounded,
-              size: 20,
-              color: AppTheme.infoColor,
+              size: 18,
+              color: _themeColor,
             ),
           ),
           const SizedBox(width: 12),
@@ -429,7 +463,7 @@ class _RegisterPageState extends State<RegisterPage> {
               'Recibirás un correo de verificación para activar tu cuenta',
               style: TextStyle(
                 color: AppTheme.textSecondaryDark,
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
           ),
