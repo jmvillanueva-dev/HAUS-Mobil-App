@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class EmailVerificationSentPage extends StatelessWidget {
   final String email;
@@ -10,9 +11,8 @@ class EmailVerificationSentPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -20,137 +20,195 @@ class EmailVerificationSentPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Icono de email
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.mark_email_unread_rounded,
-                    size: 60,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 32),
+                // Glowing Icon
+                _buildSelectionIcon(),
 
-                // Título
-                Text(
-                  '¡Revisa tu correo!',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-
-                // Mensaje
-                Text(
-                  'Hemos enviado un enlace de verificación a:',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-
-                // Email
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    email,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 24),
 
-                // Instrucciones
+                // Title
+                const Text(
+                  '¡Revisa tu correo!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimaryDark,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+
+                // Subtitle
+                Text(
+                  'Hemos enviado un enlace de verificación a:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textSecondaryDark,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+
+                // Email Container
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppTheme.surfaceDark,
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.amber.withValues(alpha: 0.3),
+                      color: AppTheme.borderDark,
+                      width: 1,
                     ),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
-                        Icons.info_outline,
-                        color: Colors.amber,
+                        Icons.email_outlined,
+                        size: 20,
+                        color: AppTheme.primaryColor,
                       ),
                       const SizedBox(width: 12),
+                      Flexible(
+                        child: Text(
+                          email,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimaryDark,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Info Box
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceDark,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.info_outline_rounded,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Text(
                           'Debes confirmar tu correo electrónico para poder iniciar sesión en la aplicación.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.amber.shade800,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textSecondaryDark,
+                            height: 1.4,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
 
-                // Pasos
+                const SizedBox(height: 24),
+
+                // Steps
                 _buildStep(
-                  context,
                   number: '1',
                   text: 'Abre tu bandeja de entrada',
                   icon: Icons.inbox_rounded,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 _buildStep(
-                  context,
                   number: '2',
                   text: 'Busca el correo de HAUS',
                   icon: Icons.search_rounded,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 _buildStep(
-                  context,
                   number: '3',
                   text: 'Haz clic en el enlace de verificación',
-                  icon: Icons.link_rounded,
+                  icon: Icons.touch_app_rounded,
                 ),
-                const SizedBox(height: 40),
 
-                // Botón volver al login
-                SizedBox(
+                const SizedBox(height: 32),
+
+                // Action Button
+                Container(
+                  height: 56,
                   width: double.infinity,
-                  child: FilledButton.icon(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [
+                        AppTheme.primaryColor,
+                        AppTheme.primaryDark,
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     },
-                    icon: const Icon(Icons.login_rounded),
-                    label: const Text('Ir a Iniciar Sesión'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Ir a Iniciar Sesión',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.backgroundDark,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
 
-                // Nota sobre spam
+                const SizedBox(height: 24),
+
+                // Spam Note
                 Text(
                   '¿No encuentras el correo? Revisa tu carpeta de spam.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textTertiaryDark,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -162,45 +220,136 @@ class EmailVerificationSentPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStep(
-    BuildContext context, {
+  Widget _buildSelectionIcon() {
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer glow ring
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                width: 2,
+              ),
+            ),
+          ),
+          // Main icon container
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primaryColor,
+                  AppTheme.primaryDark,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.mark_email_unread_rounded,
+              size: 28,
+              color: Colors.white,
+            ),
+          ),
+          // Small lock badge
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppTheme.primaryColor,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                size: 12,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep({
     required String number,
     required String text,
     required IconData icon,
   }) {
-    final theme = Theme.of(context);
-
     return Row(
       children: [
         Container(
-          width: 32,
-          height: 32,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary,
-            shape: BoxShape.circle,
+            color: AppTheme.surfaceDark,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppTheme.borderDark,
+              width: 1,
+            ),
           ),
           child: Center(
             child: Text(
               number,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppTheme.primaryColor,
                 fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textSecondaryDark,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
         Icon(
           icon,
-          color: theme.colorScheme.primary.withValues(alpha: 0.7),
           size: 20,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: theme.textTheme.bodyMedium,
-          ),
+          color: AppTheme.textTertiaryDark,
         ),
       ],
     );
