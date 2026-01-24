@@ -7,11 +7,20 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/landing_page.dart';
 import 'injection_container.dart';
 
+import 'features/auth/presentation/bloc/auth_event.dart';
+import 'features/auth/presentation/bloc/auth_state.dart';
+import 'features/auth/presentation/pages/onboarding_page.dart';
+import 'features/home/presentation/pages/main_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Cargar variables de entorno
-  await dotenv.load(fileName: '.env');
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    // Silently fail or handle error
+  }
 
   // Configurar inyección de dependencias (incluye inicialización de Supabase)
   await configureDependencies();
@@ -27,17 +36,29 @@ class HausApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => getIt<AuthBloc>(),
+          create: (context) =>
+              getIt<AuthBloc>()..add(const AuthCheckRequested()),
         ),
       ],
       child: MaterialApp(
         title: 'HAUS',
         debugShowCheckedModeBanner: false,
-        // Tema oscuro como principal
         theme: AppTheme.darkTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark,
-        home: const LandingPage(),
+        home: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            if (state is AuthAuthenticated) {
+              return MainPage(user: state.user);
+            } else if (state is OnboardingRequired) {
+              return OnboardingPage(user: state.user);
+            } else if (state is AuthUnauthenticated || state is AuthError) {
+              return const LandingPage();
+            }
+            // Mientras carga o estado inicial, mostrar splash o landing
+            return const LandingPage();
+          },
+        ),
       ),
     );
   }

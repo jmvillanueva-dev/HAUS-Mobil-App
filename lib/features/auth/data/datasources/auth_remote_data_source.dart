@@ -118,7 +118,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         metadata['display_name'] = '$firstName $lastName'.trim();
       }
 
-      print('DEBUG: SignUp sending metadata: $metadata');
+      // developer.log('DEBUG: SignUp sending metadata: $metadata', name: 'Auth');
 
       final response = await supabaseClient.auth.signUp(
         email: email,
@@ -138,10 +138,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return UserModel.fromSupabaseUser(response.user!);
     } on AuthException catch (e) {
-      print('DEBUG: AuthException in SignUp: ${e.message}');
+      // developer.log('DEBUG: AuthException in SignUp: ${e.message}', name: 'Auth');
       rethrow;
     } catch (e) {
-      print('DEBUG: Generic Exception in SignUp: $e');
+      // developer.log('DEBUG: Generic Exception in SignUp: $e', name: 'Auth');
       throw Exception('Error al registrarse: $e');
     }
   }
@@ -247,7 +247,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return response;
     } catch (e) {
-      print('DEBUG: Error fetching profile: $e');
+      // developer.log('DEBUG: Error fetching profile: $e', name: 'Auth');
       return null;
     }
   }

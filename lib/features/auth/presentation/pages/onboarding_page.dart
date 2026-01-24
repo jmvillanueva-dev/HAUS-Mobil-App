@@ -174,7 +174,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
           neighborhood: _selectedNeighborhood,
           latitude: _selectedCoordinates?.latitude,
           longitude: _selectedCoordinates?.longitude,
-          isPrimary: true,
         );
       }
 

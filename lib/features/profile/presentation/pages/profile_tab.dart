@@ -4,8 +4,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
-import '../../../auth/presentation/pages/onboarding_page.dart';
 import '../../../locations/presentation/pages/my_locations_page.dart';
+import 'edit_profile_page.dart';
 
 /// Tab de Perfil - Diseño limpio y moderno
 class ProfileTab extends StatelessWidget {
@@ -116,7 +116,7 @@ class ProfileTab extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => OnboardingPage(user: user),
+                            builder: (_) => EditProfilePage(user: user),
                           ),
                         );
                       },

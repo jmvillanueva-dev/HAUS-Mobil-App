@@ -6,7 +6,7 @@ abstract class LocationRepository {
   Future<Either<Failure, List<UserLocationEntity>>> getMyLocations(
       String userId);
 
-  Future<Either<Failure, UserLocationEntity>> createLocation({
+  Future<Either<Failure, void>> createLocation({
     required String userId,
     required LocationLabel label,
     required LocationPurpose purpose,
@@ -15,6 +15,16 @@ abstract class LocationRepository {
     String? neighborhood,
     double? latitude,
     double? longitude,
-    bool isPrimary = false,
+  });
+
+  Future<Either<Failure, void>> updateLocation({
+    required String locationId,
+    required LocationLabel label,
+    required LocationPurpose purpose,
+    String? address,
+    String? city,
+    String? neighborhood,
+    double? latitude,
+    double? longitude,
   });
 }

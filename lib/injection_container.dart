@@ -7,7 +7,9 @@ import 'package:app_links/app_links.dart';
 import 'core/constants/app_constants.dart';
 import 'injection_container.config.dart';
 import 'features/locations/domain/usecases/get_my_locations_usecase.dart';
+import 'features/locations/domain/usecases/update_location_usecase.dart';
 import 'features/locations/presentation/bloc/locations_bloc.dart';
+import 'core/network/network_info.dart';
 
 final getIt = GetIt.instance;
 final sl = GetIt.instance;
@@ -40,11 +42,18 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
 
-  // Locations Feature
+  // Locations Feature - Manual registrations for items not yet annotated
+  // Use Cases
   getIt.registerLazySingleton(() => GetMyLocationsUseCase(getIt()));
-  getIt.registerFactory(() => LocationsBloc(getMyLocations: getIt()));
+  getIt.registerLazySingleton(() => UpdateLocationUseCase(getIt()));
 
-  // Initialize injectable
+  // Bloc
+  getIt.registerFactory(() => LocationsBloc(
+        getMyLocations: getIt(),
+        repository: getIt(),
+      ));
+
+  // Initialize injectable (this will register annotated classes)
   getIt.init();
 }
 
