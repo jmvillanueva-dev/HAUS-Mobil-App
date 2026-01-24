@@ -1,11 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/avatar_service.dart';
+import '../../../../core/data/ecuador_locations.dart';
 import '../../../../injection_container.dart';
 import '../../../locations/domain/entities/user_location_entity.dart';
 import '../../../locations/domain/repositories/location_repository.dart';
+import '../../../locations/presentation/widgets/mini_map_picker.dart';
 import '../../domain/entities/user_entity.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -32,8 +36,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final _bioController = TextEditingController();
   final _universityOrCompanyController = TextEditingController();
   final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _neighborhoodController = TextEditingController();
 
   int _currentStep = 0;
   File? _selectedImage;
@@ -41,6 +43,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
   String? _avatarUrl;
   LocationLabel _selectedLocationLabel = LocationLabel.work;
   bool _isUniversity = true; // Selector para tipo de organización
+  LatLng? _selectedCoordinates; // Coordenadas seleccionadas del mapa
+
+  // Selección de ciudad y barrio
+  String? _selectedCity;
+  String? _selectedNeighborhood;
 
   late final AvatarService _avatarService;
   late final LocationRepository _locationRepository;
@@ -67,16 +74,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
     _bioController.dispose();
     _universityOrCompanyController.dispose();
     _addressController.dispose();
-    _cityController.dispose();
-    _neighborhoodController.dispose();
     super.dispose();
   }
 
   int get _totalSteps => 5;
-
-  String get _roleDisplayName {
-    return widget.user.role == UserRole.student ? 'estudiante' : 'trabajador';
-  }
 
   Future<void> _pickImage(bool fromCamera) async {
     File? image;
@@ -132,9 +133,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
         return;
       }
     } else if (_currentStep == 3) {
-      // Paso de ubicación: al menos ciudad es obligatoria
-      if (_cityController.text.trim().isEmpty) {
-        _showValidationError('Debes ingresar al menos la ciudad');
+      // Paso de ubicación: ciudad es obligatoria
+      if (_selectedCity == null || _selectedCity!.isEmpty) {
+        _showValidationError('Debes seleccionar una ciudad');
         return;
       }
     }
@@ -158,9 +159,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   Future<void> _handleComplete() async {
     if (_formKey.currentState!.validate()) {
-      // Guardar ubicación si hay datos
+      // Guardar ubicación si hay datos o coordenadas
       if (_addressController.text.trim().isNotEmpty ||
-          _cityController.text.trim().isNotEmpty) {
+          _selectedCity != null ||
+          _selectedCoordinates != null) {
         await _locationRepository.createLocation(
           userId: widget.user.id,
           label: _selectedLocationLabel,
@@ -168,12 +170,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
           address: _addressController.text.trim().isNotEmpty
               ? _addressController.text.trim()
               : null,
-          city: _cityController.text.trim().isNotEmpty
-              ? _cityController.text.trim()
-              : null,
-          neighborhood: _neighborhoodController.text.trim().isNotEmpty
-              ? _neighborhoodController.text.trim()
-              : null,
+          city: _selectedCity,
+          neighborhood: _selectedNeighborhood,
+          latitude: _selectedCoordinates?.latitude,
+          longitude: _selectedCoordinates?.longitude,
           isPrimary: true,
         );
       }
@@ -364,70 +364,238 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 20),
-        Container(
-          width: 100,
-          height: 100,
-          margin: const EdgeInsets.only(bottom: 32),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.primaryColor.withValues(alpha: 0.2),
-                AppTheme.primaryColor.withValues(alpha: 0.05),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: AppTheme.primaryColor.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          child: const Icon(
-            Icons.waving_hand_rounded,
-            size: 48,
-            color: AppTheme.primaryColor,
+        const SizedBox(height: 5),
+
+        // Icono principal compacto
+        Center(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.primaryColor.withValues(alpha: 0.15),
+                      AppTheme.primaryColor.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.home_rounded,
+                    size: 32, color: Colors.white),
+              ),
+            ],
           ),
         ),
+
+        const SizedBox(height: 2),
+
+        // Saludo compacto
         Text(
-          '¡Hola, ${widget.user.firstName ?? 'usuario'}!',
+          'Bienvenido a HAUS',
           style: const TextStyle(
-            fontSize: 28,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             color: AppTheme.textPrimaryDark,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
         Text(
-          'Vamos a completar tu perfil de $_roleDisplayName para que puedas encontrar el roomie ideal.',
+          widget.user.firstName ?? 'Usuario',
           style: TextStyle(
-            fontSize: 16,
-            color: AppTheme.textSecondaryDark,
-            height: 1.5,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 32),
-        _buildInfoCard(
+
+        const SizedBox(height: 2),
+
+        Text(
+          'Completa tu perfil para conectar con roomies compatibles.',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppTheme.textSecondaryDark,
+            height: 1.4,
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 20),
+
+        // Timeline compacto
+        _buildWelcomeTimelineItem(
+          stepNumber: 1,
           icon: Icons.camera_alt_rounded,
           title: 'Foto de perfil',
-          description: 'Una buena foto aumenta la confianza.',
+          description: 'Genera confianza con una foto real',
+          isFirst: true,
         ),
-        const SizedBox(height: 12),
-        _buildInfoCard(
+        _buildWelcomeTimelineItem(
+          stepNumber: 2,
+          icon: Icons.phone_rounded,
+          title: 'Datos de contacto',
+          description: 'Universidad o empresa',
+        ),
+        _buildWelcomeTimelineItem(
+          stepNumber: 3,
           icon: Icons.location_on_rounded,
-          title: 'Tu ubicación',
-          description: 'Para encontrar roomies cercanos a ti.',
+          title: 'Ubicacion',
+          description: 'Para encontrar roomies cerca',
         ),
-        const SizedBox(height: 12),
-        _buildInfoCard(
+        _buildWelcomeTimelineItem(
+          stepNumber: 4,
           icon: Icons.person_rounded,
           title: 'Sobre ti',
-          description: 'Cuéntanos un poco sobre tu estilo de vida.',
+          description: 'Tu estilo de vida',
+          isLast: true,
         ),
       ],
+    );
+  }
+
+  Widget _buildWelcomeTimelineItem({
+    required int stepNumber,
+    required IconData icon,
+    required String title,
+    required String description,
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Timeline connector
+          SizedBox(
+            width: 36,
+            child: Column(
+              children: [
+                // Línea superior (conecta con item anterior)
+                Container(
+                  width: 2,
+                  height: 8,
+                  color: isFirst ? Colors.transparent : AppTheme.primaryColor,
+                ),
+                // Número del paso
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$stepNumber',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                // Línea inferior (conecta con siguiente item)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: isLast ? Colors.transparent : AppTheme.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Contenido
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.borderDark),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: AppTheme.primaryColor, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimaryDark,
+                          ),
+                        ),
+                        Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textSecondaryDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -435,64 +603,140 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 20),
-        const Text(
-          'Foto de perfil',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryDark,
-          ),
+        const SizedBox(height: 16),
+
+        // Header compacto
+        Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                ),
+              ),
+              child: const Icon(Icons.camera_alt_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Foto de perfil',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimaryDark,
+                    ),
+                  ),
+                  Text(
+                    'Una foto real genera más confianza',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Una foto ayuda a otros usuarios a conocerte mejor.',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppTheme.textSecondaryDark,
-          ),
-        ),
+
         const SizedBox(height: 32),
 
-        // Avatar preview
+        // Avatar preview con efecto premium
         Center(
           child: Stack(
             children: [
+              // Anillo exterior decorativo
               Container(
-                width: 150,
-                height: 150,
+                width: 160,
+                height: 160,
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceDark,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                    width: 3,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.primaryColor.withValues(alpha: 0.3),
+                      AppTheme.primaryColor.withValues(alpha: 0.1),
+                    ],
                   ),
-                  image: _selectedImage != null
-                      ? DecorationImage(
-                          image: FileImage(_selectedImage!),
-                          fit: BoxFit.cover,
+                ),
+              ),
+              // Avatar principal
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  width: 144,
+                  height: 144,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceDark,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppTheme.primaryColor,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                    image: _selectedImage != null
+                        ? DecorationImage(
+                            image: FileImage(_selectedImage!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: _selectedImage == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo_rounded,
+                              size: 40,
+                              color: AppTheme.primaryColor,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Agregar foto',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondaryDark,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         )
                       : null,
                 ),
-                child: _selectedImage == null
-                    ? Icon(
-                        Icons.person_rounded,
-                        size: 60,
-                        color: AppTheme.textSecondaryDark,
-                      )
-                    : null,
               ),
+              // Indicador de carga
               if (_isUploading)
-                Positioned.fill(
+                Positioned(
+                  top: 8,
+                  left: 8,
                   child: Container(
-                    decoration: BoxDecoration(
+                    width: 144,
+                    height: 144,
+                    decoration: const BoxDecoration(
                       color: Colors.black54,
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
                       child: CircularProgressIndicator(
-                        color: AppTheme.primaryColor,
+                        color: Colors.white,
+                        strokeWidth: 3,
                       ),
                     ),
                   ),
@@ -500,9 +744,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ],
           ),
         ),
+
         const SizedBox(height: 32),
 
-        // Buttons
+        // Botones con diseño moderno
         Row(
           children: [
             Expanded(
@@ -512,7 +757,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 onTap: () => _pickImage(false),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: _buildPhotoButton(
                 icon: Icons.camera_alt_rounded,
@@ -522,15 +767,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
           ],
         ),
-        const SizedBox(height: 24),
 
-        Text(
-          'Puedes omitir este paso y agregar una foto después.',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppTheme.textTertiaryDark,
+        const SizedBox(height: 20),
+
+        // Mensaje informativo
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
-          textAlign: TextAlign.center,
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                size: 18,
+                color: AppTheme.primaryColor,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Tu foto será visible para otros usuarios de HAUS',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondaryDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -541,28 +806,46 @@ class _OnboardingPageState extends State<OnboardingPage> {
     required String label,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceDark,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.borderDark),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: AppTheme.primaryColor),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textPrimaryDark,
-                fontWeight: FontWeight.w500,
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryColor,
+                AppTheme.primaryDark,
+              ],
             ),
-          ],
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 22, color: Colors.white),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -572,39 +855,82 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 20),
-        const Text(
-          'Información de contacto',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryDark,
-          ),
+        const SizedBox(height: 16),
+
+        // Header compacto (mismo estilo que foto)
+        Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                ),
+              ),
+              child: const Icon(Icons.contact_phone_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Datos de contacto',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimaryDark,
+                    ),
+                  ),
+                  Text(
+                    'Para conectar con otros usuarios',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Esta información te ayudará a conectar con otros usuarios.',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppTheme.textSecondaryDark,
-          ),
-        ),
-        const SizedBox(height: 32),
+
+        const SizedBox(height: 28),
+
+        // Campo teléfono
         CustomTextField(
           controller: _phoneController,
           label: 'Teléfono',
-          hint: '+593 999 999 999',
-          prefixIcon: Icons.phone_outlined,
+          hint: '0991234567',
+          prefixIcon: Icons.phone_rounded,
           keyboardType: TextInputType.phone,
+          maxLength: 10,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Ingresa tu número de teléfono';
+            }
+            if (value.length != 10) {
+              return 'El número debe tener 10 dígitos';
+            }
+            return null;
+          },
         ),
+
         const SizedBox(height: 24),
+
         // Selector de tipo de organización
         const Text(
           'Tipo de organización',
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimaryDark,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textSecondaryDark,
           ),
         ),
         const SizedBox(height: 12),
@@ -613,7 +939,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             Expanded(
               child: _buildOrganizationTypeChip(
                 isSelected: _isUniversity,
-                icon: Icons.school_outlined,
+                icon: Icons.school_rounded,
                 label: 'Universidad',
                 onTap: () => setState(() => _isUniversity = true),
               ),
@@ -622,14 +948,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
             Expanded(
               child: _buildOrganizationTypeChip(
                 isSelected: !_isUniversity,
-                icon: Icons.business_outlined,
+                icon: Icons.business_rounded,
                 label: 'Empresa',
                 onTap: () => setState(() => _isUniversity = false),
               ),
             ),
           ],
         ),
+
         const SizedBox(height: 16),
+
+        // Campo universidad/empresa
         CustomTextField(
           controller: _universityOrCompanyController,
           label: _isUniversity ? 'Universidad' : 'Empresa',
@@ -638,31 +967,40 @@ class _OnboardingPageState extends State<OnboardingPage> {
               : 'Nombre de tu empresa',
           prefixIcon:
               _isUniversity ? Icons.school_outlined : Icons.business_outlined,
+          maxLength: 60,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return _isUniversity
+                  ? 'Ingresa el nombre de tu universidad'
+                  : 'Ingresa el nombre de tu empresa';
+            }
+            return null;
+          },
         ),
-        const SizedBox(height: 24),
+
+        const SizedBox(height: 20),
+
+        // Mensaje informativo
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppTheme.infoColor.withValues(alpha: 0.1),
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.infoColor.withValues(alpha: 0.3),
-            ),
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                color: AppTheme.infoColor,
-                size: 20,
+              Icon(
+                Icons.lock_outline_rounded,
+                size: 18,
+                color: AppTheme.primaryColor,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Tu número de teléfono solo será visible para roomies con los que conectes.',
+                  'Tu teléfono solo será visible para roomies con los que conectes',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.infoColor,
+                    color: AppTheme.textSecondaryDark,
                   ),
                 ),
               ),
@@ -679,42 +1017,53 @@ class _OnboardingPageState extends State<OnboardingPage> {
     required String label,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.primaryColor.withValues(alpha: 0.2)
-              : AppTheme.surfaceDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppTheme.primaryColor : AppTheme.borderDark,
-            width: isSelected ? 2 : 1,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                  )
+                : null,
+            color: isSelected ? null : AppTheme.surfaceDark,
+            borderRadius: BorderRadius.circular(14),
+            border: isSelected ? null : Border.all(color: AppTheme.borderDark),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected
-                  ? AppTheme.primaryColor
-                  : AppTheme.textSecondaryDark,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected
-                    ? AppTheme.primaryColor
-                    : AppTheme.textSecondaryDark,
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 26,
+                color: isSelected ? Colors.white : AppTheme.textSecondaryDark,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : AppTheme.textSecondaryDark,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -724,82 +1073,138 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 20),
-        const Text(
-          'Tu ubicación',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryDark,
-          ),
+        const SizedBox(height: 16),
+
+        // Header compacto (mismo estilo)
+        Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                ),
+              ),
+              child: const Icon(Icons.location_on_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Tu ubicación',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimaryDark,
+                    ),
+                  ),
+                  Text(
+                    'Para encontrar roomies cerca de ti',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Ingresa la ubicación de tu ${widget.user.role == UserRole.student ? "universidad" : "trabajo"} para encontrar roomies cerca.',
+
+        const SizedBox(height: 24),
+
+        // Tipo de ubicación
+        const Text(
+          'Tipo de ubicación',
           style: TextStyle(
             fontSize: 14,
+            fontWeight: FontWeight.w500,
             color: AppTheme.textSecondaryDark,
           ),
         ),
-        const SizedBox(height: 24),
-
-        // Location type selector
+        const SizedBox(height: 12),
         Row(
           children: [
             _buildLocationTypeChip(LocationLabel.university, 'Universidad'),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             _buildLocationTypeChip(LocationLabel.work, 'Trabajo'),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             _buildLocationTypeChip(LocationLabel.other, 'Otro'),
           ],
         ),
+
         const SizedBox(height: 24),
 
-        CustomTextField(
-          controller: _cityController,
-          label: 'Ciudad',
-          hint: 'Ej: Quito',
-          prefixIcon: Icons.location_city_rounded,
-        ),
-        const SizedBox(height: 16),
-        CustomTextField(
-          controller: _neighborhoodController,
-          label: 'Barrio / Sector',
-          hint: 'Ej: La Floresta',
-          prefixIcon: Icons.map_rounded,
-        ),
-        const SizedBox(height: 16),
+        // Selector de ciudad
+        _buildCityDropdown(),
+
+        const SizedBox(height: 14),
+
+        // Selector de barrio
+        _buildNeighborhoodDropdown(),
+        const SizedBox(height: 14),
         CustomTextField(
           controller: _addressController,
           label: 'Dirección (opcional)',
           hint: 'Calle principal y secundaria',
           prefixIcon: Icons.home_rounded,
+          maxLength: 100,
         ),
-        const SizedBox(height: 24),
 
+        const SizedBox(height: 20),
+
+        // Sección del mapa
+        const Text(
+          'Selecciona tu ubicación en el mapa',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textSecondaryDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Mini mapa para seleccionar coordenadas
+        MiniMapPicker(
+          initialLocation: _selectedCoordinates,
+          height: 200,
+          onLocationSelected: (coordinates) {
+            setState(() {
+              _selectedCoordinates = coordinates;
+            });
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        // Mensaje informativo
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppTheme.warningColor.withValues(alpha: 0.1),
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.warningColor.withValues(alpha: 0.3),
-            ),
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.lightbulb_outline_rounded,
-                color: AppTheme.warningColor,
-                size: 20,
+              Icon(
+                Icons.tips_and_updates_rounded,
+                size: 18,
+                color: AppTheme.primaryColor,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'No te preocupes, más adelante podrás agregar más ubicaciones o editarlas.',
+                  'Mueve el mapa para ajustar tu ubicación exacta',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.warningColor,
+                    color: AppTheme.textSecondaryDark,
                   ),
                 ),
               ),
@@ -810,45 +1215,203 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildLocationTypeChip(LocationLabel label, String text) {
-    final isSelected = _selectedLocationLabel == label;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _selectedLocationLabel = label),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppTheme.primaryColor.withValues(alpha: 0.2)
-                : AppTheme.surfaceDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? AppTheme.primaryColor : AppTheme.borderDark,
-              width: isSelected ? 2 : 1,
-            ),
-          ),
-          child: Column(
+  Widget _buildCityDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _selectedCity != null
+              ? AppTheme.primaryColor
+              : AppTheme.borderDark,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedCity,
+          isExpanded: true,
+          hint: Row(
             children: [
-              Icon(
-                label.icon,
-                size: 20,
-                color: isSelected
-                    ? AppTheme.primaryColor
-                    : AppTheme.textSecondaryDark,
-              ),
-              const SizedBox(height: 4),
+              const SizedBox(width: 16),
+              Icon(Icons.location_city_rounded,
+                  color: AppTheme.textSecondaryDark, size: 20),
+              const SizedBox(width: 12),
               Text(
-                text,
+                'Selecciona tu ciudad',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? AppTheme.primaryColor
-                      : AppTheme.textSecondaryDark,
+                  color: AppTheme.textSecondaryDark,
+                  fontSize: 14,
                 ),
               ),
             ],
+          ),
+          icon: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(Icons.keyboard_arrow_down_rounded,
+                color: AppTheme.textSecondaryDark),
+          ),
+          dropdownColor: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          items: EcuadorLocations.cities.map((city) {
+            return DropdownMenuItem<String>(
+              value: city,
+              child: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  Icon(Icons.location_city_rounded,
+                      color: AppTheme.primaryColor, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    city,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimaryDark,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedCity = value;
+              _selectedNeighborhood = null; // Reset barrio al cambiar ciudad
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNeighborhoodDropdown() {
+    final neighborhoods = _selectedCity != null
+        ? EcuadorLocations.getNeighborhoods(_selectedCity!)
+        : <String>[];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _selectedNeighborhood != null
+              ? AppTheme.primaryColor
+              : AppTheme.borderDark,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedNeighborhood,
+          isExpanded: true,
+          hint: Row(
+            children: [
+              const SizedBox(width: 16),
+              Icon(Icons.map_rounded,
+                  color: AppTheme.textSecondaryDark, size: 20),
+              const SizedBox(width: 12),
+              Text(
+                _selectedCity == null
+                    ? 'Primero selecciona una ciudad'
+                    : 'Selecciona tu barrio',
+                style: TextStyle(
+                  color: AppTheme.textSecondaryDark,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          icon: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(Icons.keyboard_arrow_down_rounded,
+                color: AppTheme.textSecondaryDark),
+          ),
+          dropdownColor: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          items: neighborhoods.map((neighborhood) {
+            return DropdownMenuItem<String>(
+              value: neighborhood,
+              child: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  Icon(Icons.map_rounded,
+                      color: AppTheme.primaryColor, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    neighborhood,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimaryDark,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: _selectedCity == null
+              ? null
+              : (value) {
+                  setState(() {
+                    _selectedNeighborhood = value;
+                  });
+                },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationTypeChip(LocationLabel label, String text) {
+    final isSelected = _selectedLocationLabel == label;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _selectedLocationLabel = label),
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                    )
+                  : null,
+              color: isSelected ? null : AppTheme.surfaceDark,
+              borderRadius: BorderRadius.circular(12),
+              border:
+                  isSelected ? null : Border.all(color: AppTheme.borderDark),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  label.icon,
+                  size: 22,
+                  color: isSelected ? Colors.white : AppTheme.textSecondaryDark,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color:
+                        isSelected ? Colors.white : AppTheme.textSecondaryDark,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -859,186 +1422,273 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 20),
-        const Text(
-          'Cuéntanos sobre ti',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryDark,
+        const SizedBox(height: 16),
+
+        // Header compacto (mismo estilo)
+        Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                ),
+              ),
+              child: const Icon(Icons.edit_note_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Cuéntanos sobre ti',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimaryDark,
+                    ),
+                  ),
+                  Text(
+                    'Tu bio ayuda a encontrar el roomie ideal',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Campo de bio mejorado
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: _bioController,
+            maxLines: 5,
+            maxLength: 300,
+            style: const TextStyle(
+              color: AppTheme.textPrimaryDark,
+              fontSize: 14,
+            ),
+            decoration: InputDecoration(
+              hintText:
+                  '¿Qué te gusta hacer? ¿Cuál es tu rutina? ¿Qué buscas en un roomie?',
+              hintStyle: TextStyle(
+                color: AppTheme.textSecondaryDark,
+                fontSize: 14,
+              ),
+              filled: true,
+              fillColor: AppTheme.surfaceDark,
+              counterStyle: TextStyle(
+                color: AppTheme.textSecondaryDark,
+                fontSize: 11,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.borderDark),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide:
+                    const BorderSide(color: AppTheme.primaryColor, width: 2),
+              ),
+              contentPadding: const EdgeInsets.all(16),
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Una buena descripción aumenta tus posibilidades de encontrar el roomie ideal.',
+
+        const SizedBox(height: 20),
+
+        // Título de sugerencias
+        const Text(
+          'Toca para agregar a tu bio:',
           style: TextStyle(
             fontSize: 14,
+            fontWeight: FontWeight.w500,
             color: AppTheme.textSecondaryDark,
           ),
         ),
-        const SizedBox(height: 32),
-        TextFormField(
-          controller: _bioController,
-          maxLines: 5,
-          maxLength: 300,
-          decoration: InputDecoration(
-            labelText: 'Bio',
-            hintText:
-                '¿Qué te gusta hacer? ¿Cuál es tu rutina? ¿Qué buscas en un roomie?',
-            alignLabelWithHint: true,
-            filled: true,
-            fillColor: AppTheme.surfaceDark,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.borderDark),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.borderDark),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide:
-                  const BorderSide(color: AppTheme.primaryColor, width: 2),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        const Text(
-          'Ideas para tu bio:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimaryDark,
-          ),
-        ),
         const SizedBox(height: 12),
+
+        // Chips de sugerencias mejorados
         Wrap(
           spacing: 8,
-          runSpacing: 8,
+          runSpacing: 10,
           children: [
-            _buildSuggestionChip('Gamer'),
-            _buildSuggestionChip('Estudiante tranquilo'),
-            _buildSuggestionChip('Nocturno'),
-            _buildSuggestionChip('Madrugador'),
-            _buildSuggestionChip('Ordenado'),
-            _buildSuggestionChip('Amante de la musica'),
-            _buildSuggestionChip('Pet friendly'),
-            _buildSuggestionChip('No fumador'),
+            _buildSuggestionChip('Gamer', 'Gamer'),
+            _buildSuggestionChip(
+                'Estudiante tranquilo', 'Estudiante tranquilo'),
+            _buildSuggestionChip('Nocturno', 'Nocturno'),
+            _buildSuggestionChip('Madrugador', 'Madrugador'),
+            _buildSuggestionChip('Ordenado', 'Ordenado'),
+            _buildSuggestionChip('Amante de la música', 'Amante de la música'),
+            _buildSuggestionChip('Pet friendly', 'Pet friendly'),
+            _buildSuggestionChip('No fumador', 'No fumador'),
+            _buildSuggestionChip('Fitness', 'Fitness'),
+            _buildSuggestionChip('Cocinero', 'Cocinero'),
           ],
         ),
-      ],
-    );
-  }
 
-  Widget _buildSuggestionChip(String text) {
-    return InkWell(
-      onTap: () {
-        final currentText = _bioController.text;
-        if (currentText.isEmpty) {
-          _bioController.text = text;
-        } else {
-          _bioController.text = '$currentText $text';
-        }
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceDark,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.borderDark),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppTheme.textPrimaryDark,
-          ),
-        ),
-      ),
-    );
-  }
+        const SizedBox(height: 20),
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppTheme.primaryColor, size: 24),
+        // Mensaje informativo
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimaryDark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
+          child: Row(
+            children: [
+              Icon(
+                Icons.lightbulb_rounded,
+                size: 18,
+                color: AppTheme.primaryColor,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Sé auténtico, los perfiles honestos generan mejores conexiones',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppTheme.textSecondaryDark,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSuggestionChip(String displayText, String valueText) {
+    final isInBio =
+        _bioController.text.toLowerCase().contains(valueText.toLowerCase());
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          final currentText = _bioController.text;
+          if (!isInBio) {
+            if (currentText.isEmpty) {
+              _bioController.text = valueText;
+            } else {
+              _bioController.text = '$currentText, $valueText';
+            }
+            setState(() {}); // Actualizar UI
+          }
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: isInBio
+                ? LinearGradient(
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                  )
+                : null,
+            color: isInBio ? null : AppTheme.surfaceDark,
+            borderRadius: BorderRadius.circular(20),
+            border: isInBio ? null : Border.all(color: AppTheme.borderDark),
+            boxShadow: isInBio
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                displayText,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isInBio ? FontWeight.w600 : FontWeight.normal,
+                  color: isInBio ? Colors.white : AppTheme.textPrimaryDark,
+                ),
+              ),
+              if (isInBio) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.check_circle,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildNavigationButtons(bool isLoading) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
         color: AppTheme.surfaceDark,
         border: Border(
-          top: BorderSide(color: AppTheme.borderDark),
+          top: BorderSide(color: AppTheme.borderDark.withValues(alpha: 0.5)),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: Row(
         children: [
           if (_currentStep > 0)
             Expanded(
-              child: OutlinedButton(
+              child: TextButton(
                 onPressed: _handleBack,
-                style: OutlinedButton.styleFrom(
+                style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: AppTheme.borderDark),
+                  backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
+                  elevation: 0,
                 ),
                 child: const Text(
                   'Atrás',
                   style: TextStyle(
-                    color: AppTheme.textPrimaryDark,
-                    fontWeight: FontWeight.w600,
+                    color: AppTheme
+                        .backgroundDark, // Texto oscuro para contraste con fondo blanco
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
               ),
@@ -1047,17 +1697,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
           Expanded(
             flex: _currentStep == 0 ? 1 : 2,
             child: Container(
-              height: 52,
+              height: 54,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [AppTheme.primaryColor, AppTheme.primaryDark],
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -1069,24 +1721,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
+                  padding: EdgeInsets.zero,
                 ),
                 child: isLoading
                     ? const SizedBox(
-                        width: 20,
-                        height: 20,
+                        width: 24,
+                        height: 24,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppTheme.backgroundDark,
+                          strokeWidth: 2.5,
+                          color: Colors.white,
                         ),
                       )
                     : Text(
                         _currentStep == _totalSteps - 1
-                            ? 'Completar'
+                            ? 'Completar Perfil'
                             : 'Continuar',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.backgroundDark,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
                       ),
               ),
