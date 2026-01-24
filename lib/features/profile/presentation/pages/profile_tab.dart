@@ -6,7 +6,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/pages/onboarding_page.dart';
 
-/// Tab de Perfil - Gestión de cuenta y configuración
+/// Tab de Perfil - Diseño limpio y moderno
 class ProfileTab extends StatelessWidget {
   final UserEntity user;
 
@@ -19,13 +19,14 @@ class ProfileTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
+            // Header Title
             const Text(
               'Perfil',
+              textAlign: TextAlign.left,
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -34,24 +35,174 @@ class ProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Profile card
-            _buildProfileCard(context),
-            const SizedBox(height: 20),
+            // DIV 1: Perfil Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppTheme.borderDark),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Avatar Grande
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppTheme.primaryColor,
+                        width: 2,
+                      ),
+                      image:
+                          user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(user.avatarUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                    ),
+                    child: user.avatarUrl == null || user.avatarUrl!.isEmpty
+                        ? Center(
+                            child: Text(
+                              _getInitials(),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimaryDark,
+                              ),
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 16),
+                  // Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.displayName,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimaryDark,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '@${user.email.split('@')[0]}', // Simular username
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondaryDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Botón Editar Cuadrado
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => OnboardingPage(user: user),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      tooltip: 'Editar Perfil',
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-            // Completeness indicator
-            if (!user.isProfileComplete) _buildCompletenessCard(context),
-            if (!user.isProfileComplete) const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Match score placeholder
-            _buildMatchScoreCard(),
-            const SizedBox(height: 20),
+            // DIV 2: Lista de Opciones
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppTheme.borderDark),
+              ),
+              child: Column(
+                children: [
+                  _buildMenuItem(
+                    icon: Icons.favorite_border_rounded,
+                    label: 'Mis Favoritos',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMenuItem(
+                    icon: Icons.location_on_outlined,
+                    label: 'Mis Ubicaciones',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMenuItem(
+                    icon: Icons.verified_outlined,
+                    label: 'Verificación',
+                    trailing: _buildVerificationBadge(),
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMenuItem(
+                    icon: Icons.notifications_none_rounded,
+                    label: 'Notificaciones',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMenuItem(
+                    icon: Icons.security_outlined,
+                    label: 'Privacidad y seguridad',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMenuItem(
+                    icon: Icons.help_outline_rounded,
+                    label: 'Ayuda y soporte',
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ),
 
-            // Settings sections
-            _buildSettingsSection(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Logout
-            _buildLogoutButton(context),
+            // DIV 3: Cerrar Sesión
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppTheme.borderDark),
+              ),
+              child: _buildMenuItem(
+                icon: Icons.logout_rounded,
+                label: 'Cerrar sesión',
+                isDestructive: true,
+                onTap: () {
+                  context.read<AuthBloc>().add(const SignOutRequested());
+                },
+              ),
+            ),
+
             const SizedBox(height: 80),
           ],
         ),
@@ -59,124 +210,82 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Widget? trailing,
+    bool isDestructive = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Row(
         children: [
-          // Avatar
           Container(
-            width: 72,
-            height: 72,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-              ),
-              borderRadius: BorderRadius.circular(20),
+              color: isDestructive
+                  ? AppTheme.errorColor.withValues(alpha: 0.1)
+                  : AppTheme.surfaceDark,
+              shape: BoxShape.circle,
             ),
-            child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
-                      user.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildAvatarPlaceholder(),
-                    ),
-                  )
-                : _buildAvatarPlaceholder(),
+            child: Icon(
+              icon,
+              size: 20,
+              color: isDestructive
+                  ? AppTheme.errorColor
+                  : AppTheme.textPrimaryDark,
+            ),
           ),
           const SizedBox(width: 16),
-
-          // Info
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.displayName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimaryDark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user.email,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textSecondaryDark,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        user.role == UserRole.student
-                            ? Icons.school_rounded
-                            : Icons.work_rounded,
-                        size: 12,
-                        color: AppTheme.primaryColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        user.role.displayName,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: isDestructive
+                    ? AppTheme.errorColor
+                    : AppTheme.textPrimaryDark,
+              ),
             ),
           ),
-
-          // Edit button
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => OnboardingPage(user: user),
-                ),
-              );
-            },
-            icon: Icon(
-              Icons.edit_outlined,
-              color: AppTheme.textSecondaryDark,
-            ),
+          if (trailing != null) ...[
+            trailing,
+            const SizedBox(width: 12),
+          ],
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 16,
+            color: AppTheme.textTertiaryDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAvatarPlaceholder() {
-    return Center(
+  Widget _buildVerificationBadge() {
+    final color = AppTheme.getVerificationColor(user.verificationStatus.name);
+
+    // Solo mostrar badge si está verificado o en proceso
+    if (user.verificationStatus.name == 'unverified') {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
       child: Text(
-        _getInitials(),
-        style: const TextStyle(
-          fontSize: 24,
+        user.verificationStatus.name.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
           fontWeight: FontWeight.bold,
-          color: AppTheme.backgroundDark,
+          color: color,
         ),
       ),
     );
@@ -194,339 +303,5 @@ class ProfileTab extends StatelessWidget {
       initials = user.email.substring(0, 2).toUpperCase();
     }
     return initials;
-  }
-
-  Widget _buildCompletenessCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.warningColor.withValues(alpha: 0.15),
-            AppTheme.warningColor.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.warningColor.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppTheme.warningColor.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.warning_amber_rounded,
-              color: AppTheme.warningColor,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Perfil incompleto',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimaryDark,
-                  ),
-                ),
-                Text(
-                  'Completa tu perfil para mejores resultados',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondaryDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => OnboardingPage(user: user),
-                ),
-              );
-            },
-            child: Text(
-              'Completar',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMatchScoreCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Match score',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimaryDark,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add, size: 14, color: AppTheme.primaryColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Configurar',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // Score ring placeholder
-          Row(
-            children: [
-              // Ring
-              SizedBox(
-                width: 80,
-                height: 80,
-                child: Stack(
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: CircularProgressIndicator(
-                        value: 0.0, // No score yet
-                        strokeWidth: 6,
-                        backgroundColor: AppTheme.borderDark,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppTheme.primaryColor,
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Text(
-                        '--%',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimaryDark,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 20),
-
-              // Traits placeholder
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Completa el cuestionario de compatibilidad',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textSecondaryDark,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _buildTraitChip('Horarios'),
-                        _buildTraitChip('Mascotas'),
-                        _buildTraitChip('Limpieza'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTraitChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.backgroundDark,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          color: AppTheme.textSecondaryDark,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Column(
-        children: [
-          _buildSettingItem(
-            Icons.location_on_outlined,
-            'Mis ubicaciones',
-            onTap: () {},
-          ),
-          _buildDivider(),
-          _buildSettingItem(
-            Icons.verified_outlined,
-            'Verificación',
-            trailing: _buildVerificationBadge(),
-            onTap: () {},
-          ),
-          _buildDivider(),
-          _buildSettingItem(
-            Icons.notifications_outlined,
-            'Notificaciones',
-            onTap: () {},
-          ),
-          _buildDivider(),
-          _buildSettingItem(
-            Icons.security_outlined,
-            'Privacidad y seguridad',
-            onTap: () {},
-          ),
-          _buildDivider(),
-          _buildSettingItem(
-            Icons.help_outline_rounded,
-            'Ayuda y soporte',
-            onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingItem(IconData icon, String label,
-      {Widget? trailing, VoidCallback? onTap}) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Icon(icon, size: 22, color: AppTheme.textSecondaryDark),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.textPrimaryDark,
-                ),
-              ),
-            ),
-            if (trailing != null) trailing,
-            const SizedBox(width: 8),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: AppTheme.textTertiaryDark,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Divider(
-      height: 1,
-      color: AppTheme.borderDark,
-      indent: 52,
-    );
-  }
-
-  Widget _buildVerificationBadge() {
-    final color = AppTheme.getVerificationColor(user.verificationStatus.name);
-    final text = AppTheme.getVerificationText(user.verificationStatus.name);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return TextButton.icon(
-      onPressed: () {
-        context.read<AuthBloc>().add(const SignOutRequested());
-      },
-      icon: Icon(
-        Icons.logout_rounded,
-        size: 18,
-        color: AppTheme.errorColor,
-      ),
-      label: Text(
-        'Cerrar sesión',
-        style: TextStyle(
-          color: AppTheme.errorColor,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
   }
 }
