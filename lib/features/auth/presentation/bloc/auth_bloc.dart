@@ -140,8 +140,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) => emit(AuthError(failure.message)),
       (user) {
-        // Si el perfil no está completo, redirigir a onboarding
-        if (!user.isProfileComplete) {
+        // Si el onboarding no está completo, redirigir a onboarding
+        if (!user.onboardingCompleted) {
           emit(OnboardingRequired(user));
         } else {
           // Verificar selección de rol
@@ -216,8 +216,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (failure) => emit(const AuthUnauthenticated()),
       (user) {
         if (user != null) {
-          // Si el perfil no está completo, redirigir a onboarding
-          if (!user.isProfileComplete) {
+          // Si el onboarding no está completo, redirigir a onboarding
+          if (!user.onboardingCompleted) {
             emit(OnboardingRequired(user));
           } else {
             // Verificar selección de rol
@@ -257,6 +257,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           universityOrCompany:
               event.universityOrCompany ?? currentUser.universityOrCompany,
           avatarUrl: event.avatarUrl ?? currentUser.avatarUrl,
+          onboardingCompleted:
+              event.onboardingCompleted ?? currentUser.onboardingCompleted,
         );
 
         // Actualizar perfil en BD

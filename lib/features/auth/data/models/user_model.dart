@@ -17,6 +17,7 @@ class UserModel extends UserEntity {
     super.universityOrCompany,
     super.verificationDocUrl,
     super.isRoleSelected,
+    super.onboardingCompleted,
     super.createdAt,
     super.updatedAt,
   });
@@ -51,6 +52,7 @@ class UserModel extends UserEntity {
       role: UserRole.fromString(metadata['role'] as String?),
       isRoleSelected:
           metadata.containsKey('role') || metadata.containsKey('role_selected'),
+      onboardingCompleted: false, // Desde auth no tenemos este dato
       createdAt: DateTime.tryParse(user.createdAt),
     );
   }
@@ -75,6 +77,7 @@ class UserModel extends UserEntity {
       // Si solo tenemos el perfil, asumimos que el rol es válido,
       // pero idealmente siempre deberíamos tener el usuario de auth.
       isRoleSelected: true,
+      onboardingCompleted: json['onboarding_completed'] as bool? ?? false,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
@@ -108,6 +111,7 @@ class UserModel extends UserEntity {
       verificationDocUrl: profile['verification_doc_url'] as String?,
       isRoleSelected:
           metadata.containsKey('role') || metadata.containsKey('role_selected'),
+      onboardingCompleted: profile['onboarding_completed'] as bool? ?? false,
       createdAt: DateTime.tryParse(authUser.createdAt),
       updatedAt: profile['updated_at'] != null
           ? DateTime.tryParse(profile['updated_at'] as String)
@@ -126,6 +130,7 @@ class UserModel extends UserEntity {
       'bio': bio,
       'role': role.toDbString(),
       'university_or_company': universityOrCompany,
+      'onboarding_completed': onboardingCompleted,
       // status y verification_doc_url no se actualizan desde el cliente
     };
   }
@@ -140,6 +145,10 @@ class UserModel extends UserEntity {
     if (bio != null) map['bio'] = bio;
     if (universityOrCompany != null) {
       map['university_or_company'] = universityOrCompany;
+    }
+    // Siempre incluir onboarding_completed cuando es true
+    if (onboardingCompleted) {
+      map['onboarding_completed'] = true;
     }
     return map;
   }
@@ -159,6 +168,7 @@ class UserModel extends UserEntity {
       universityOrCompany: universityOrCompany,
       verificationDocUrl: verificationDocUrl,
       isRoleSelected: isRoleSelected,
+      onboardingCompleted: onboardingCompleted,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -179,6 +189,7 @@ class UserModel extends UserEntity {
       universityOrCompany: entity.universityOrCompany,
       verificationDocUrl: entity.verificationDocUrl,
       isRoleSelected: entity.isRoleSelected,
+      onboardingCompleted: entity.onboardingCompleted,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );

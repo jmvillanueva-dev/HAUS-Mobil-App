@@ -10,7 +10,6 @@ import '../../../listings/presentation/pages/publish_tab.dart';
 import '../../../connections/presentation/pages/connections_tab.dart';
 import '../../../profile/presentation/pages/profile_tab.dart';
 import 'home_tab.dart';
-import '../../../../core/widgets/profile_incomplete_modal.dart';
 
 /// Página principal con navegación por tabs estilo "Floating Pill"
 class MainPage extends StatefulWidget {
@@ -33,29 +32,8 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _currentUser = widget.user;
-
-    // Mostrar modal si perfil incompleto
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_currentUser.isProfileComplete) {
-        _showProfileIncompleteModal();
-      }
-    });
-  }
-
-  void _showProfileIncompleteModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ProfileIncompleteModal(
-        user: _currentUser,
-        onComplete: () {
-          Navigator.pop(context);
-          setState(() => _currentIndex = 4); // Ir a tab de perfil
-        },
-        onSkip: () => Navigator.pop(context),
-      ),
-    );
+    // El modal de perfil incompleto ya no es necesario
+    // porque el onboarding es obligatorio antes de llegar aquí
   }
 
   List<Widget> get _pages => [
@@ -83,14 +61,14 @@ class _MainPageState extends State<MainPage> {
       },
       child: Scaffold(
         backgroundColor: AppTheme.backgroundDark,
-        
-        extendBody: true, 
-        
+
+        extendBody: true,
+
         body: IndexedStack(
           index: _currentIndex,
           children: _pages,
         ),
-        
+
         // Barra de navegación personalizada y flotante
         bottomNavigationBar: SafeArea(
           bottom: true,
@@ -105,7 +83,8 @@ class _MainPageState extends State<MainPage> {
                   end: Alignment.bottomRight,
                   colors: [
                     Colors.white.withOpacity(0.95), // Blanco casi opaco arriba
-                    Colors.white.withOpacity(0.85), // Un poco más transparente abajo
+                    Colors.white
+                        .withOpacity(0.85), // Un poco más transparente abajo
                   ],
                 ),
                 borderRadius: BorderRadius.circular(35),
@@ -129,11 +108,15 @@ class _MainPageState extends State<MainPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Inicio'),
-                    _buildNavItem(1, Icons.search_rounded, Icons.search_outlined, 'Explorar'),
+                    _buildNavItem(
+                        0, Icons.home_rounded, Icons.home_outlined, 'Inicio'),
+                    _buildNavItem(1, Icons.search_rounded,
+                        Icons.search_outlined, 'Explorar'),
                     _buildCenterNavItem(),
-                    _buildNavItem(3, Icons.favorite_rounded, Icons.favorite_outline_rounded, 'Conexiones'),
-                    _buildNavItem(4, Icons.person_rounded, Icons.person_outline_rounded, 'Perfil'),
+                    _buildNavItem(3, Icons.favorite_rounded,
+                        Icons.favorite_outline_rounded, 'Conexiones'),
+                    _buildNavItem(4, Icons.person_rounded,
+                        Icons.person_outline_rounded, 'Perfil'),
                   ],
                 ),
               ),
@@ -145,55 +128,55 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildNavItem(
-    int index, IconData activeIcon, IconData inactiveIcon, String label) {
-  final isSelected = _currentIndex == index;
-  
-  return GestureDetector(
-    onTap: () => setState(() => _currentIndex = index),
-    behavior: HitTestBehavior.opaque,
-    child: Container(
-      constraints: const BoxConstraints(minWidth: 60),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.all(isSelected ? 8 : 0),
-            decoration: isSelected 
-                ? BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  )
-                : const BoxDecoration(
-                    color: Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-            child: Icon(
-              isSelected ? activeIcon : inactiveIcon,
-              size: 24,
-              // IMPORTANTE: Cambiamos el color de los no seleccionados a gris oscuro
-              // para que se vean sobre el fondo blanco
-              color: isSelected
-                  ? AppTheme.primaryColor
-                  : const Color.fromARGB(255, 0, 0, 0), 
-            ),
-          ),
-          if (isSelected) ...[
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor,
+      int index, IconData activeIcon, IconData inactiveIcon, String label) {
+    final isSelected = _currentIndex == index;
+
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 60),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.all(isSelected ? 8 : 0),
+              decoration: isSelected
+                  ? BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    )
+                  : const BoxDecoration(
+                      color: Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+              child: Icon(
+                isSelected ? activeIcon : inactiveIcon,
+                size: 24,
+                // IMPORTANTE: Cambiamos el color de los no seleccionados a gris oscuro
+                // para que se vean sobre el fondo blanco
+                color: isSelected
+                    ? AppTheme.primaryColor
+                    : const Color.fromARGB(255, 0, 0, 0),
               ),
             ),
-          ]
-        ],
+            if (isSelected) ...[
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ]
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildCenterNavItem() {
     final isSelected = _currentIndex == 2;
@@ -201,7 +184,7 @@ class _MainPageState extends State<MainPage> {
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = 2),
       child: Container(
-        width: 50, 
+        width: 50,
         height: 50,
         decoration: BoxDecoration(
           gradient: LinearGradient(

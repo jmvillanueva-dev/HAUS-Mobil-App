@@ -77,6 +77,7 @@ class UpdateProfileRequested extends AuthEvent {
   final String? bio;
   final String? universityOrCompany;
   final String? avatarUrl;
+  final bool? onboardingCompleted;
 
   const UpdateProfileRequested({
     this.firstName,
@@ -85,11 +86,19 @@ class UpdateProfileRequested extends AuthEvent {
     this.bio,
     this.universityOrCompany,
     this.avatarUrl,
+    this.onboardingCompleted,
   });
 
   @override
-  List<Object?> get props =>
-      [firstName, lastName, phone, bio, universityOrCompany, avatarUrl];
+  List<Object?> get props => [
+        firstName,
+        lastName,
+        phone,
+        bio,
+        universityOrCompany,
+        avatarUrl,
+        onboardingCompleted
+      ];
 }
 
 /// Evento de inicio de sesión social

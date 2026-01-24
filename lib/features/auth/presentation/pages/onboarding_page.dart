@@ -40,6 +40,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool _isUploading = false;
   String? _avatarUrl;
   LocationLabel _selectedLocationLabel = LocationLabel.work;
+  bool _isUniversity = true; // Selector para tipo de organización
 
   late final AvatarService _avatarService;
   late final LocationRepository _locationRepository;
@@ -57,6 +58,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     _selectedLocationLabel = widget.user.role == UserRole.student
         ? LocationLabel.university
         : LocationLabel.work;
+    _isUniversity = widget.user.role == UserRole.student;
   }
 
   @override
@@ -74,16 +76,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   String get _roleDisplayName {
     return widget.user.role == UserRole.student ? 'estudiante' : 'trabajador';
-  }
-
-  String get _universityOrCompanyLabel {
-    return widget.user.role == UserRole.student ? 'Universidad' : 'Empresa';
-  }
-
-  String get _universityOrCompanyHint {
-    return widget.user.role == UserRole.student
-        ? 'Nombre de tu universidad'
-        : 'Nombre de tu empresa';
   }
 
   Future<void> _pickImage(bool fromCamera) async {
@@ -119,12 +111,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _handleContinue() async {
-    if (_currentStep < _totalSteps - 1) {
-      // Si estamos en el paso de foto y hay imagen seleccionada, subir
-      if (_currentStep == 1 && _selectedImage != null && _avatarUrl == null) {
+    // Validación según el paso actual
+    if (_currentStep == 1) {
+      // Paso de foto: obligatorio
+      if (_selectedImage == null && _avatarUrl == null) {
+        _showValidationError('Debes agregar una foto de perfil para continuar');
+        return;
+      }
+      if (_selectedImage != null && _avatarUrl == null) {
         await _uploadAvatar();
       }
+    } else if (_currentStep == 2) {
+      // Paso de contacto: validar campos obligatorios
+      if (_phoneController.text.trim().isEmpty) {
+        _showValidationError('El número de teléfono es obligatorio');
+        return;
+      }
+      if (_universityOrCompanyController.text.trim().isEmpty) {
+        _showValidationError('Debes ingresar tu universidad o empresa');
+        return;
+      }
+    } else if (_currentStep == 3) {
+      // Paso de ubicación: al menos ciudad es obligatoria
+      if (_cityController.text.trim().isEmpty) {
+        _showValidationError('Debes ingresar al menos la ciudad');
+        return;
+      }
+    }
 
+    if (_currentStep < _totalSteps - 1) {
       setState(() {
         _currentStep++;
       });
@@ -182,15 +197,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       ? _universityOrCompanyController.text.trim()
                       : null,
               avatarUrl: _avatarUrl,
+              onboardingCompleted: true,
             ),
           );
     }
   }
 
-  void _handleSkip() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => MainPage(user: widget.user),
+  void _showValidationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -274,16 +295,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
           ),
           const Spacer(),
-          TextButton(
-            onPressed: _handleSkip,
-            child: Text(
-              'Omitir',
-              style: TextStyle(
-                color: AppTheme.textSecondaryDark,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
+          // Botón de omitir eliminado - onboarding es obligatorio
         ],
       ),
     );
@@ -580,19 +592,52 @@ class _OnboardingPageState extends State<OnboardingPage> {
         const SizedBox(height: 32),
         CustomTextField(
           controller: _phoneController,
-          label: 'Teléfono (opcional)',
+          label: 'Teléfono',
           hint: '+593 999 999 999',
           prefixIcon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
         ),
+        const SizedBox(height: 24),
+        // Selector de tipo de organización
+        const Text(
+          'Tipo de organización',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimaryDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildOrganizationTypeChip(
+                isSelected: _isUniversity,
+                icon: Icons.school_outlined,
+                label: 'Universidad',
+                onTap: () => setState(() => _isUniversity = true),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildOrganizationTypeChip(
+                isSelected: !_isUniversity,
+                icon: Icons.business_outlined,
+                label: 'Empresa',
+                onTap: () => setState(() => _isUniversity = false),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         CustomTextField(
           controller: _universityOrCompanyController,
-          label: _universityOrCompanyLabel,
-          hint: _universityOrCompanyHint,
-          prefixIcon: widget.user.role == UserRole.student
-              ? Icons.school_outlined
-              : Icons.business_outlined,
+          label: _isUniversity ? 'Universidad' : 'Empresa',
+          hint: _isUniversity
+              ? 'Nombre de tu universidad'
+              : 'Nombre de tu empresa',
+          prefixIcon:
+              _isUniversity ? Icons.school_outlined : Icons.business_outlined,
         ),
         const SizedBox(height: 24),
         Container(
@@ -625,6 +670,53 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOrganizationTypeChip({
+    required bool isSelected,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primaryColor.withValues(alpha: 0.2)
+              : AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : AppTheme.borderDark,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: isSelected
+                  ? AppTheme.primaryColor
+                  : AppTheme.textSecondaryDark,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? AppTheme.primaryColor
+                    : AppTheme.textSecondaryDark,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -825,14 +917,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _buildSuggestionChip('🎮 Gamer'),
-            _buildSuggestionChip('📚 Estudiante tranquilo'),
-            _buildSuggestionChip('🌙 Ave nocturna'),
-            _buildSuggestionChip('☀️ Madrugador'),
-            _buildSuggestionChip('🧹 Ordenado'),
-            _buildSuggestionChip('🎵 Amante de la música'),
-            _buildSuggestionChip('🐕 Pet friendly'),
-            _buildSuggestionChip('🚭 No fumador'),
+            _buildSuggestionChip('Gamer'),
+            _buildSuggestionChip('Estudiante tranquilo'),
+            _buildSuggestionChip('Nocturno'),
+            _buildSuggestionChip('Madrugador'),
+            _buildSuggestionChip('Ordenado'),
+            _buildSuggestionChip('Amante de la musica'),
+            _buildSuggestionChip('Pet friendly'),
+            _buildSuggestionChip('No fumador'),
           ],
         ),
       ],

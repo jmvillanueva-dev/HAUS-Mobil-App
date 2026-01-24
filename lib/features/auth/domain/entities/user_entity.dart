@@ -97,6 +97,9 @@ class UserEntity extends Equatable {
   /// Indica si el usuario ha seleccionado su rol explícitamente
   final bool isRoleSelected;
 
+  /// Indica si el usuario completó el onboarding obligatorio
+  final bool onboardingCompleted;
+
   /// Fecha de creación de la cuenta
   final DateTime? createdAt;
 
@@ -117,6 +120,7 @@ class UserEntity extends Equatable {
     this.verificationDocUrl,
     this.isRoleSelected =
         true, // Por defecto true para no romper lógica existente
+    this.onboardingCompleted = false,
     this.createdAt,
     this.updatedAt,
   });
@@ -160,6 +164,7 @@ class UserEntity extends Equatable {
     String? universityOrCompany,
     String? verificationDocUrl,
     bool? isRoleSelected,
+    bool? onboardingCompleted,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -176,6 +181,7 @@ class UserEntity extends Equatable {
       universityOrCompany: universityOrCompany ?? this.universityOrCompany,
       verificationDocUrl: verificationDocUrl ?? this.verificationDocUrl,
       isRoleSelected: isRoleSelected ?? this.isRoleSelected,
+      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -195,6 +201,7 @@ class UserEntity extends Equatable {
         universityOrCompany,
         verificationDocUrl,
         isRoleSelected,
+        onboardingCompleted,
         createdAt,
         updatedAt,
       ];
