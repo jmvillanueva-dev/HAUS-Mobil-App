@@ -7,6 +7,9 @@ class ListingModel extends ListingEntity {
     required super.title,
     required super.description,
     required super.price,
+    required super.housingType,
+    required super.city,
+    required super.neighborhood,
     required super.address,
     super.latitude,
     super.longitude,
@@ -22,12 +25,17 @@ class ListingModel extends ListingEntity {
       title: json['title'],
       description: json['description'] ?? '',
       price: (json['price'] as num).toDouble(),
+      housingType: json['housing_type'] ?? '',
+      city: json['city'] ?? '',
+      neighborhood: json['neighborhood'] ?? '',
       address: json['address'] ?? '',
       latitude: json['latitude'],
       longitude: json['longitude'],
       amenities: List<String>.from(json['amenities'] ?? []),
       imageUrls: List<String>.from(json['image_urls'] ?? []),
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
     );
   }
 
@@ -37,6 +45,9 @@ class ListingModel extends ListingEntity {
       'title': title,
       'description': description,
       'price': price,
+      'housing_type': housingType,
+      'city': city,
+      'neighborhood': neighborhood,
       'address': address,
       'latitude': latitude,
       'longitude': longitude,

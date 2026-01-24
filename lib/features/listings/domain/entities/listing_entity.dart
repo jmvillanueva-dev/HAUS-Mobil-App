@@ -6,6 +6,9 @@ class ListingEntity extends Equatable {
   final String title;
   final String description;
   final double price;
+  final String housingType;
+  final String city;
+  final String neighborhood;
   final String address;
   final double? latitude;
   final double? longitude;
@@ -19,6 +22,9 @@ class ListingEntity extends Equatable {
     required this.title,
     required this.description,
     required this.price,
+    required this.housingType,
+    required this.city,
+    required this.neighborhood,
     required this.address,
     this.latitude,
     this.longitude,
@@ -28,5 +34,5 @@ class ListingEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, userId, title, price, createdAt];
+  List<Object?> get props => [id, userId, title, price, city, createdAt];
 }

@@ -38,7 +38,8 @@ class ListingDetailPage extends StatelessWidget {
                     )
                   : Container(
                       color: AppTheme.surfaceDark,
-                      child: Icon(Icons.home, size: 64, color: AppTheme.textSecondaryDark),
+                      child: Icon(Icons.home,
+                          size: 64, color: AppTheme.textSecondaryDark),
                     ),
             ),
           ),
@@ -56,13 +57,36 @@ class ListingDetailPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          listing.title,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              listing.title,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surfaceDarkElevated,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AppTheme.borderDark),
+                              ),
+                              child: Text(
+                                listing.housingType,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -77,16 +101,32 @@ class ListingDetailPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Dirección
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 16, color: AppTheme.textSecondaryDark),
+                      Icon(Icons.location_on,
+                          size: 16, color: AppTheme.textSecondaryDark),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text(
-                          listing.address,
-                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${listing.neighborhood}, ${listing.city}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              listing.address,
+                              style: TextStyle(
+                                  color: AppTheme.textSecondaryDark,
+                                  fontSize: 14),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -96,12 +136,16 @@ class ListingDetailPage extends StatelessWidget {
                   // Descripción
                   const Text(
                     'Descripción',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     listing.description,
-                    style: TextStyle(color: AppTheme.textSecondaryDark, height: 1.5),
+                    style: TextStyle(
+                        color: AppTheme.textSecondaryDark, height: 1.5),
                   ),
                   const SizedBox(height: 24),
 
@@ -109,7 +153,10 @@ class ListingDetailPage extends StatelessWidget {
                   if (listing.amenities.isNotEmpty) ...[
                     const Text(
                       'Lo que ofrece este lugar',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -117,7 +164,8 @@ class ListingDetailPage extends StatelessWidget {
                       runSpacing: 8,
                       children: listing.amenities.map((amenity) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: AppTheme.surfaceDark,
                             borderRadius: BorderRadius.circular(20),
@@ -125,7 +173,8 @@ class ListingDetailPage extends StatelessWidget {
                           ),
                           child: Text(
                             amenity,
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12),
                           ),
                         );
                       }).toList(),
@@ -134,10 +183,14 @@ class ListingDetailPage extends StatelessWidget {
                   ],
 
                   // Mapa de Ubicación
-                  if (listing.latitude != null && listing.longitude != null) ...[
+                  if (listing.latitude != null &&
+                      listing.longitude != null) ...[
                     const Text(
                       'Ubicación',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                     const SizedBox(height: 12),
                     Container(
@@ -150,21 +203,25 @@ class ListingDetailPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         child: FlutterMap(
                           options: MapOptions(
-                            initialCenter: LatLng(listing.latitude!, listing.longitude!),
+                            initialCenter:
+                                LatLng(listing.latitude!, listing.longitude!),
                             initialZoom: 15,
                           ),
                           children: [
                             TileLayer(
-                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               userAgentPackageName: 'com.haus.app',
                             ),
                             MarkerLayer(
                               markers: [
                                 Marker(
-                                  point: LatLng(listing.latitude!, listing.longitude!),
+                                  point: LatLng(
+                                      listing.latitude!, listing.longitude!),
                                   width: 40,
                                   height: 40,
-                                  child: const Icon(Icons.location_on, color: AppTheme.primaryColor, size: 40),
+                                  child: const Icon(Icons.location_on,
+                                      color: AppTheme.primaryColor, size: 40),
                                 ),
                               ],
                             ),
@@ -194,11 +251,13 @@ class ListingDetailPage extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primaryColor,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           child: const Text(
             'Contactar al anfitrión',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
       ),

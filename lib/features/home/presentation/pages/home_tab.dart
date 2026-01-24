@@ -49,7 +49,8 @@ class HomeTab extends StatelessWidget {
 
                     // 3. Sección: Roommates recomendados (Restaurada - Datos Mock)
                     SliverToBoxAdapter(
-                      child: _buildSectionTitle('Roommates recomendados', onSeeAll: () {}),
+                      child: _buildSectionTitle('Roommates recomendados',
+                          onSeeAll: () {}),
                     ),
                     SliverToBoxAdapter(
                       child: _buildRecommendedRoommates(),
@@ -57,7 +58,8 @@ class HomeTab extends StatelessWidget {
 
                     // 4. Sección: Habitaciones (CON DATOS REALES DE SUPABASE)
                     SliverToBoxAdapter(
-                      child: _buildSectionTitle('Habitaciones recientes', onSeeAll: () {}),
+                      child: _buildSectionTitle('Habitaciones recientes',
+                          onSeeAll: () {}),
                     ),
                     SliverToBoxAdapter(
                       child: _buildRealListingsList(state),
@@ -360,12 +362,17 @@ class HomeTab extends StatelessWidget {
   }
 
   // --- SECCIÓN PUBLICACIONES REALES (NUEVA LÓGICA) ---
- Widget _buildRealListingsList(ListingState state) {
+  Widget _buildRealListingsList(ListingState state) {
     if (state is ListingLoading) {
-      return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+      return const SizedBox(
+          height: 200, child: Center(child: CircularProgressIndicator()));
     } else if (state is ListingsLoaded) {
       if (state.listings.isEmpty) {
-        return const SizedBox(height: 100, child: Center(child: Text("No hay habitaciones recientes", style: TextStyle(color: Colors.white54))));
+        return const SizedBox(
+            height: 100,
+            child: Center(
+                child: Text("No hay habitaciones recientes",
+                    style: TextStyle(color: Colors.white54))));
       }
       return SizedBox(
         height: 280, // Altura para el diseño "grande"
@@ -380,7 +387,9 @@ class HomeTab extends StatelessWidget {
         ),
       );
     } else if (state is ListingError) {
-      return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+      return Center(
+          child:
+              Text(state.message, style: const TextStyle(color: Colors.red)));
     }
     return const SizedBox.shrink();
   }
@@ -391,7 +400,8 @@ class HomeTab extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => ListingDetailPage(listing: listing)),
+          MaterialPageRoute(
+              builder: (_) => ListingDetailPage(listing: listing)),
         );
       },
       child: Container(
@@ -407,7 +417,8 @@ class HomeTab extends StatelessWidget {
             // Imagen
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 child: listing.imageUrls.isNotEmpty
                     ? Image.network(
                         listing.imageUrls.first,
@@ -415,12 +426,15 @@ class HomeTab extends StatelessWidget {
                         width: double.infinity,
                         errorBuilder: (context, error, stackTrace) => Container(
                           color: Colors.grey[800],
-                          child: const Icon(Icons.image_not_supported, color: Colors.white54),
+                          child: const Icon(Icons.image_not_supported,
+                              color: Colors.white54),
                         ),
                       )
                     : Container(
                         color: Colors.grey[800],
-                        child: const Center(child: Icon(Icons.home, color: Colors.white54, size: 40)),
+                        child: const Center(
+                            child: Icon(Icons.home,
+                                color: Colors.white54, size: 40)),
                       ),
               ),
             ),
@@ -430,6 +444,27 @@ class HomeTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          listing.housingType,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     listing.title,
                     maxLines: 1,
@@ -443,11 +478,12 @@ class HomeTab extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 12, color: AppTheme.textSecondaryDark),
+                      Icon(Icons.location_on,
+                          size: 12, color: AppTheme.textSecondaryDark),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          listing.address,
+                          '${listing.neighborhood}, ${listing.city}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -500,8 +536,8 @@ class HomeTab extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor
-                          .withOpacity(0.2 + index * 0.1),
+                      color:
+                          AppTheme.primaryColor.withOpacity(0.2 + index * 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(color: AppTheme.surfaceDark, width: 2),
                     ),

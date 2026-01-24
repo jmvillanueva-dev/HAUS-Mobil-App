@@ -18,16 +18,19 @@ class ListingRemoteDataSourceImpl implements ListingRemoteDataSource {
   ListingRemoteDataSourceImpl(this.supabaseClient);
 
   @override
-  Future<ListingModel> uploadListing(ListingEntity listing, List<File> images) async {
+  Future<ListingModel> uploadListing(
+      ListingEntity listing, List<File> images) async {
     try {
       // 1. Subir imágenes
       List<String> uploadedUrls = [];
       for (var image in images) {
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${image.path.split('/').last}';
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${image.path.split('/').last}';
         final path = 'listings/${listing.userId}/$fileName';
-        
+
         await supabaseClient.storage.from('listings').upload(path, image);
-        final imageUrl = supabaseClient.storage.from('listings').getPublicUrl(path);
+        final imageUrl =
+            supabaseClient.storage.from('listings').getPublicUrl(path);
         uploadedUrls.add(imageUrl);
       }
 
@@ -37,6 +40,9 @@ class ListingRemoteDataSourceImpl implements ListingRemoteDataSource {
         title: listing.title,
         description: listing.description,
         price: listing.price,
+        housingType: listing.housingType,
+        city: listing.city,
+        neighborhood: listing.neighborhood,
         address: listing.address,
         latitude: listing.latitude,
         longitude: listing.longitude,
@@ -44,9 +50,12 @@ class ListingRemoteDataSourceImpl implements ListingRemoteDataSource {
         imageUrls: uploadedUrls,
       ).toJson();
 
-      final response = await supabaseClient.from('listings').insert(listingData).select().single();
+      final response = await supabaseClient
+          .from('listings')
+          .insert(listingData)
+          .select()
+          .single();
       return ListingModel.fromJson(response);
-      
     } catch (e) {
       throw ServerFailure(e.toString());
     }
@@ -55,16 +64,19 @@ class ListingRemoteDataSourceImpl implements ListingRemoteDataSource {
   @override
   Future<List<ListingModel>> fetchListings() async {
     try {
-      final response = await supabaseClient.from('listings').select().order('created_at', ascending: false);
+      final response = await supabaseClient
+          .from('listings')
+          .select()
+          .order('created_at', ascending: false);
       return (response as List).map((e) => ListingModel.fromJson(e)).toList();
     } catch (e) {
       throw ServerFailure(e.toString());
     }
   }
-  
+
   @override
   Future<void> deleteListing(String id) async {
-     try {
+    try {
       await supabaseClient.from('listings').delete().eq('id', id);
     } catch (e) {
       throw ServerFailure(e.toString());
