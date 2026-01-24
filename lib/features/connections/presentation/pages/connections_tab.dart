@@ -1,142 +1,178 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../chat/presentation/pages/chat_list_page.dart';
 
-/// Tab de Conexiones - Matches y chat
-class ConnectionsTab extends StatelessWidget {
+/// Tab de Conexiones - Matches y mensajes de chat
+class ConnectionsTab extends StatefulWidget {
   const ConnectionsTab({super.key});
+
+  @override
+  State<ConnectionsTab> createState() => _ConnectionsTabState();
+}
+
+class _ConnectionsTabState extends State<ConnectionsTab>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            const Text(
-              'Conexiones',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryDark,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Conexiones',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimaryDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tus matches y conversaciones',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textSecondaryDark,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Tus matches y conversaciones',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondaryDark,
-              ),
-            ),
-            const SizedBox(height: 24),
+          ),
+          const SizedBox(height: 12),
 
-            // Tabs: Matches / Mensajes
-            Container(
+          // Tabs: Matches / Mensajes
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
               height: 44,
               decoration: BoxDecoration(
                 color: AppTheme.surfaceDark,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Matches',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.backgroundDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        'Mensajes',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textSecondaryDark,
-                        ),
-                      ),
-                    ),
-                  ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelColor: AppTheme.backgroundDark,
+                unselectedLabelColor: AppTheme.textSecondaryDark,
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                ),
+                tabs: const [
+                  Tab(text: 'Matches'),
+                  Tab(text: 'Mensajes'),
                 ],
               ),
             ),
+          ),
 
-            const Spacer(),
+          const SizedBox(height: 16),
 
-            // Placeholder
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppTheme.primaryColor.withValues(alpha: 0.2),
-                          AppTheme.primaryColor.withValues(alpha: 0.05),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: Icon(
-                      Icons.favorite_rounded,
-                      size: 56,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  const Text(
-                    'Sin conexiones aún',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimaryDark,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Cuando encuentres a alguien compatible,\naparecerá aquí para que puedan chatear.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textSecondaryDark,
-                      height: 1.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 28),
+          // Contenido de las tabs
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Tab Matches - Placeholder por ahora
+                _buildMatchesPlaceholder(),
 
-                  // Flow diagram
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildFlowStep(Icons.favorite_outline_rounded, 'Interés'),
-                      _buildArrow(),
-                      _buildFlowStep(Icons.handshake_outlined, 'Match'),
-                      _buildArrow(),
-                      _buildFlowStep(Icons.chat_bubble_outline_rounded, 'Chat'),
-                    ],
-                  ),
-                ],
+                // Tab Mensajes - Lista de chats
+                const ChatListPage(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatchesPlaceholder() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryColor.withValues(alpha: 0.2),
+                    AppTheme.primaryColor.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Icon(
+                Icons.favorite_rounded,
+                size: 48,
+                color: AppTheme.primaryColor.withValues(alpha: 0.6),
               ),
             ),
+            const SizedBox(height: 24),
+            const Text(
+              'Sin matches aún',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimaryDark,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Cuando encuentres a alguien compatible,\naparecerá aquí',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textSecondaryDark,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
 
-            const Spacer(),
+            // Flow diagram
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildFlowStep(Icons.favorite_outline_rounded, 'Interés'),
+                _buildArrow(),
+                _buildFlowStep(Icons.handshake_outlined, 'Match'),
+                _buildArrow(),
+                _buildFlowStep(Icons.chat_bubble_outline_rounded, 'Chat'),
+              ],
+            ),
           ],
         ),
       ),
