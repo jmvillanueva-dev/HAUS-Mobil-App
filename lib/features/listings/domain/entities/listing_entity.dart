@@ -13,6 +13,7 @@ class ListingEntity extends Equatable {
   final double? latitude;
   final double? longitude;
   final List<String> amenities;
+  final List<String> houseRules;
   final List<String> imageUrls;
   final DateTime? createdAt;
 
@@ -29,6 +30,7 @@ class ListingEntity extends Equatable {
     this.latitude,
     this.longitude,
     required this.amenities,
+    required this.houseRules,
     required this.imageUrls,
     this.createdAt,
   });

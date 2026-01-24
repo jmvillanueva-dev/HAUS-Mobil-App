@@ -13,6 +13,7 @@ create table public.listings (
   latitude double precision,
   longitude double precision,
   amenities text[] default '{}', 
+  house_rules text[] default '{}',
   image_urls text[] default '{}',
   is_active boolean default true
 );

@@ -14,6 +14,7 @@ class ListingModel extends ListingEntity {
     super.latitude,
     super.longitude,
     required super.amenities,
+    required super.houseRules,
     required super.imageUrls,
     super.createdAt,
   });
@@ -32,6 +33,7 @@ class ListingModel extends ListingEntity {
       latitude: json['latitude'],
       longitude: json['longitude'],
       amenities: List<String>.from(json['amenities'] ?? []),
+      houseRules: List<String>.from(json['house_rules'] ?? []),
       imageUrls: List<String>.from(json['image_urls'] ?? []),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
@@ -52,6 +54,7 @@ class ListingModel extends ListingEntity {
       'latitude': latitude,
       'longitude': longitude,
       'amenities': amenities,
+      'house_rules': houseRules,
       'image_urls': imageUrls,
     };
   }

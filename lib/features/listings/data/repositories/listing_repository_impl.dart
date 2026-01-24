@@ -13,7 +13,8 @@ class ListingRepositoryImpl implements ListingRepository {
   ListingRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<Either<Failure, ListingEntity>> createListing(ListingEntity listing, List<File> images) async {
+  Future<Either<Failure, ListingEntity>> createListing(
+      ListingEntity listing, List<File> images) async {
     try {
       final result = await remoteDataSource.uploadListing(listing, images);
       return Right(result);
@@ -31,7 +32,17 @@ class ListingRepositoryImpl implements ListingRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
-  
+
+  @override
+  Stream<Either<Failure, List<ListingEntity>>> getListingsStream() {
+    return remoteDataSource.getListingsStream().map((models) {
+      return Right<Failure, List<ListingEntity>>(models);
+    }).handleError((error) {
+      return Left<Failure, List<ListingEntity>>(
+          ServerFailure(error.toString()));
+    });
+  }
+
   @override
   Future<Either<Failure, void>> deleteListing(String listingId) async {
     try {

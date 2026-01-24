@@ -181,6 +181,38 @@ class ListingDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                   ],
+                  // Reglas de la casa
+                  if (listing.houseRules.isNotEmpty) ...[
+                    const Text(
+                      'Reglas de la casa',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: listing.houseRules.map((rule) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceDark,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppTheme.borderDark),
+                          ),
+                          child: Text(
+                            rule,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
                   // Mapa de Ubicación
                   if (listing.latitude != null &&

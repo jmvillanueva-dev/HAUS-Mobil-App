@@ -42,6 +42,8 @@ import 'package:haus_app/features/listings/domain/usecases/get_listings.dart'
     as _i868;
 import 'package:haus_app/features/listings/presentation/bloc/listing_bloc.dart'
     as _i487;
+import 'package:haus_app/features/listings/domain/usecases/get_listings_stream.dart'
+    as _i869;
 import 'package:haus_app/features/locations/data/datasources/location_remote_data_source.dart'
     as _i408;
 import 'package:haus_app/features/locations/data/repositories/location_repository_impl.dart'
@@ -80,6 +82,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i662.DeleteListing(gh<_i851.ListingRepository>()));
     gh.lazySingleton<_i868.GetListings>(
         () => _i868.GetListings(gh<_i851.ListingRepository>()));
+    gh.lazySingleton<_i869.GetListingsStream>(
+        () => _i869.GetListingsStream(gh<_i851.ListingRepository>()));
     gh.lazySingleton<_i792.LocationRepository>(
         () => _i456.LocationRepositoryImpl(
               remoteDataSource: gh<_i408.LocationRemoteDataSource>(),
@@ -92,6 +96,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i487.ListingBloc>(() => _i487.ListingBloc(
           createListing: gh<_i1018.CreateListing>(),
           getListings: gh<_i868.GetListings>(),
+          getListingsStream: gh<_i869.GetListingsStream>(),
           deleteListing: gh<_i662.DeleteListing>(),
         ));
     gh.factory<_i118.GetCurrentUser>(

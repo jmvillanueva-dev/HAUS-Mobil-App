@@ -8,6 +8,7 @@ import 'package:injectable/injectable.dart';
 abstract class ListingRemoteDataSource {
   Future<ListingModel> uploadListing(ListingEntity listing, List<File> images);
   Future<List<ListingModel>> fetchListings();
+  Stream<List<ListingModel>> getListingsStream();
   Future<void> deleteListing(String id);
 }
 
@@ -47,6 +48,7 @@ class ListingRemoteDataSourceImpl implements ListingRemoteDataSource {
         latitude: listing.latitude,
         longitude: listing.longitude,
         amenities: listing.amenities,
+        houseRules: listing.houseRules,
         imageUrls: uploadedUrls,
       ).toJson();
 
@@ -72,6 +74,15 @@ class ListingRemoteDataSourceImpl implements ListingRemoteDataSource {
     } catch (e) {
       throw ServerFailure(e.toString());
     }
+  }
+
+  @override
+  Stream<List<ListingModel>> getListingsStream() {
+    return supabaseClient
+        .from('listings')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((data) => data.map((e) => ListingModel.fromJson(e)).toList());
   }
 
   @override

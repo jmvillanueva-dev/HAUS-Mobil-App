@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
@@ -47,6 +48,18 @@ class _CreateListingPageState extends State<CreateListingPage> {
   ];
 
   // Amenities disponibles y seleccionados
+  final List<String> _availableHouseRules = [
+    'No fumar',
+    'No mascotas',
+    'No fiestas',
+    'No parejas',
+    'Solo estudiantes',
+    'Limpieza semanal obligatoria',
+    'Horario de llegada',
+    'Visitas restringidas'
+  ];
+  final List<String> _selectedHouseRules = [];
+
   final List<String> _availableAmenities = [
     'Wifi',
     'Cocina',
@@ -106,6 +119,22 @@ class _CreateListingPageState extends State<CreateListingPage> {
         return;
       }
 
+      if (_selectedAmenities.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Selecciona al menos un servicio incluido')),
+        );
+        return;
+      }
+
+      if (_selectedHouseRules.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Selecciona al menos una regla de la casa')),
+        );
+        return;
+      }
+
       final listing = ListingEntity(
         userId: widget.userId, // ID del usuario actual
         title: _titleController.text,
@@ -118,6 +147,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
         latitude: _selectedLocation!.latitude, // Enviamos latitud
         longitude: _selectedLocation!.longitude, // Enviamos longitud
         amenities: _selectedAmenities, // Enviamos amenities
+        houseRules: _selectedHouseRules,
         imageUrls: const [], // Se llenará en el servidor
       );
 
@@ -209,13 +239,31 @@ class _CreateListingPageState extends State<CreateListingPage> {
                         _buildTextField(
                             controller: _titleController,
                             label: 'Título',
-                            icon: Icons.title),
+                            icon: Icons.title,
+                            maxLength: 50,
+                            validator: (val) {
+                              if (val == null || val.isEmpty)
+                                return 'Requerido';
+                              if (val.length < 5) return 'Mínimo 5 caracteres';
+                              return null;
+                            }),
                         const SizedBox(height: 16),
                         _buildTextField(
                             controller: _priceController,
                             label: 'Precio mensual',
                             icon: Icons.attach_money,
-                            isNumber: true),
+                            isNumber: true,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            validator: (val) {
+                              if (val == null || val.isEmpty)
+                                return 'Requerido';
+                              final n = double.tryParse(val);
+                              if (n == null || n <= 0)
+                                return 'Debe ser mayor a 0';
+                              return null;
+                            }),
 
                         const SizedBox(height: 16),
 
@@ -266,7 +314,15 @@ class _CreateListingPageState extends State<CreateListingPage> {
                         _buildTextField(
                             controller: _addressController,
                             label: 'Dirección escrita (Referencia)',
-                            icon: Icons.location_city),
+                            icon: Icons.location_city,
+                            maxLength: 100,
+                            validator: (val) {
+                              if (val == null || val.isEmpty)
+                                return 'Requerido';
+                              if (val.length < 10)
+                                return 'Mínimo 10 caracteres';
+                              return null;
+                            }),
                         const SizedBox(height: 16),
                         const Text(
                           'Servicios incluidos',
@@ -312,11 +368,65 @@ class _CreateListingPageState extends State<CreateListingPage> {
                           }).toList(),
                         ),
                         const SizedBox(height: 16),
+
+                        // Sección de Reglas de la casa
+                        const Text(
+                          'Reglas de la casa',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children: _availableHouseRules.map((rule) {
+                            final isSelected =
+                                _selectedHouseRules.contains(rule);
+                            return FilterChip(
+                              label: Text(rule),
+                              selected: isSelected,
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedHouseRules.add(rule);
+                                  } else {
+                                    _selectedHouseRules.remove(rule);
+                                  }
+                                });
+                              },
+                              backgroundColor: AppTheme.surfaceDark,
+                              selectedColor:
+                                  AppTheme.secondaryColor.withOpacity(0.2),
+                              checkmarkColor: AppTheme.secondaryColor,
+                              labelStyle: TextStyle(
+                                color: isSelected
+                                    ? AppTheme.secondaryColor
+                                    : Colors.white,
+                              ),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? AppTheme.secondaryColor
+                                    : AppTheme.borderDark,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
                         _buildTextField(
                             controller: _descriptionController,
                             label: 'Descripción',
                             icon: Icons.description_outlined,
-                            maxLines: 4),
+                            maxLines: 4,
+                            maxLength: 500,
+                            validator: (val) {
+                              if (val == null || val.isEmpty)
+                                return 'Requerido';
+                              if (val.length < 20)
+                                return 'Mínimo 20 caracteres';
+                              return null;
+                            }),
 
                         const SizedBox(height: 30),
 
@@ -403,14 +513,20 @@ class _CreateListingPageState extends State<CreateListingPage> {
     required IconData icon,
     bool isNumber = false,
     int maxLines = 1,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       maxLines: maxLines,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
       style: const TextStyle(color: Colors.white),
-      validator: (value) =>
-          value == null || value.isEmpty ? 'Este campo es requerido' : null,
+      validator: validator ??
+          (value) =>
+              value == null || value.isEmpty ? 'Este campo es requerido' : null,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: AppTheme.textSecondaryDark),
