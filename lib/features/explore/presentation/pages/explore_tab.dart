@@ -1,129 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../listings/presentation/bloc/listing_bloc.dart';
+import '../../../listings/presentation/bloc/listing_event.dart';
+import '../../../listings/presentation/bloc/listing_state.dart';
+import '../../../listings/domain/entities/listing_entity.dart';
+import '../../../listings/presentation/pages/listing_detail_page.dart';
 
-/// Tab de Explorar - Búsqueda con filtros
 class ExploreTab extends StatelessWidget {
   const ExploreTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            const Text(
-              'Explorar',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryDark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Encuentra tu roomie ideal o la habitación perfecta',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondaryDark,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Search bar
-            Container(
-              height: 52,
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.borderDark),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 16),
-                  Icon(
-                    Icons.search_rounded,
-                    color: AppTheme.textSecondaryDark,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
+    return BlocProvider(
+      create: (_) => GetIt.instance<ListingBloc>()..add(LoadListingsEvent()),
+      child: Scaffold(
+        backgroundColor: AppTheme.backgroundDark,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header y Buscador
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Explorar',
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        hintText: 'Buscar por zona, precio, tipo...',
-                        hintStyle: TextStyle(
-                          color: AppTheme.textSecondaryDark,
-                          fontSize: 14,
+                        hintText: 'Buscar por zona, precio...',
+                        hintStyle: TextStyle(color: AppTheme.textSecondaryDark),
+                        prefixIcon: Icon(Icons.search, color: AppTheme.textSecondaryDark),
+                        filled: true,
+                        fillColor: AppTheme.surfaceDark,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
                         ),
-                        border: InputBorder.none,
-                      ),
-                      style: const TextStyle(
-                        color: AppTheme.textPrimaryDark,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    
+                    // --- FILTROS (RESTAURADOS) ---
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterChip('Precio', Icons.keyboard_arrow_down),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Ubicación', Icons.keyboard_arrow_down),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Tipo', Icons.keyboard_arrow_down),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Servicios', Icons.tune),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
 
-            // Filters
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildFilterChip('Precio', Icons.attach_money_rounded),
-                  _buildFilterChip('Zona', Icons.location_on_outlined),
-                  _buildFilterChip('Tipo', Icons.bed_outlined),
-                  _buildFilterChip('Match', Icons.favorite_outline_rounded),
-                ],
+              // Lista Vertical
+              Expanded(
+                child: BlocBuilder<ListingBloc, ListingState>(
+                  builder: (context, state) {
+                    if (state is ListingLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is ListingsLoaded) {
+                      if (state.listings.isEmpty) {
+                        return const Center(child: Text("No se encontraron resultados", style: TextStyle(color: Colors.white)));
+                      }
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        itemCount: state.listings.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 20),
+                        itemBuilder: (context, index) {
+                          return _buildExploreCard(context, state.listings[index]);
+                        },
+                      );
+                    } else if (state is ListingError) {
+                      return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ),
-            ),
-
-            const Spacer(),
-
-            // Placeholder
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Icon(
-                      Icons.search_rounded,
-                      size: 48,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Próximamente',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondaryDark,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Los filtros avanzados estarán disponibles pronto',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textTertiaryDark,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-
-            const Spacer(),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -131,29 +101,118 @@ class ExploreTab extends StatelessWidget {
 
   Widget _buildFilterChip(String label, IconData icon) {
     return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.borderDark),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: AppTheme.textSecondaryDark),
-          const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textPrimaryDark,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(width: 4),
-          Icon(Icons.keyboard_arrow_down_rounded,
-              size: 16, color: AppTheme.textSecondaryDark),
+          Icon(icon, color: AppTheme.textSecondaryDark, size: 16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildExploreCard(BuildContext context, ListingEntity listing) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ListingDetailPage(listing: listing)),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.borderDark),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen Grande
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: SizedBox(
+                height: 180,
+                width: double.infinity,
+                child: listing.imageUrls.isNotEmpty
+                    ? Image.network(
+                        listing.imageUrls.first,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                             Container(color: Colors.grey[800], child: const Icon(Icons.broken_image, color: Colors.white54)),
+                      )
+                    : Container(color: Colors.grey[800], child: const Icon(Icons.home, color: Colors.white54, size: 50)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          listing.title,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        '\$${listing.price.toStringAsFixed(0)}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, size: 16, color: AppTheme.textSecondaryDark),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          listing.address,
+                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 14),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Amenities Chips (Mostrar solo los primeros 3)
+                  Wrap(
+                    spacing: 8,
+                    children: listing.amenities.take(3).map((amenity) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.backgroundDark,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          amenity,
+                          style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 10),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

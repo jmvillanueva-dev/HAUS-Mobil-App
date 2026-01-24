@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+// Imports de Listings (Para la lógica real)
+import '../../../listings/presentation/bloc/listing_bloc.dart';
+import '../../../listings/presentation/bloc/listing_event.dart';
+import '../../../listings/presentation/bloc/listing_state.dart';
+import '../../../listings/domain/entities/listing_entity.dart';
+import '../../../listings/presentation/pages/listing_detail_page.dart';
 
 /// Tab de Inicio - Feed de habitaciones y roommates recomendados
 class HomeTab extends StatelessWidget {
@@ -13,51 +21,70 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          // Header con ubicación
-          SliverToBoxAdapter(
-            child: _buildHeader(context),
-          ),
+    // Inyectamos el Bloc y cargamos las publicaciones inmediatamente
+    return BlocProvider(
+      create: (_) => GetIt.instance<ListingBloc>()..add(LoadListingsEvent()),
+      child: Scaffold(
+        backgroundColor: AppTheme.backgroundDark,
+        body: SafeArea(
+          // RefreshIndicator permite recargar arrastrando hacia abajo
+          child: BlocBuilder<ListingBloc, ListingState>(
+            builder: (context, state) {
+              return RefreshIndicator(
+                onRefresh: () async {
+                  context.read<ListingBloc>().add(LoadListingsEvent());
+                },
+                color: AppTheme.primaryColor,
+                child: CustomScrollView(
+                  slivers: [
+                    // 1. Header con ubicación
+                    SliverToBoxAdapter(
+                      child: _buildHeader(context),
+                    ),
 
-          // Barra de búsqueda
-          SliverToBoxAdapter(
-            child: _buildSearchBar(),
-          ),
+                    // 2. Barra de búsqueda (Restaurada)
+                    SliverToBoxAdapter(
+                      child: _buildSearchBar(),
+                    ),
 
-          // Sección: Roommates recomendados
-          SliverToBoxAdapter(
-            child:
-                _buildSectionTitle('Roommates recomendados', onSeeAll: () {}),
-          ),
-          SliverToBoxAdapter(
-            child: _buildRecommendedRoommates(),
-          ),
+                    // 3. Sección: Roommates recomendados (Restaurada - Datos Mock)
+                    SliverToBoxAdapter(
+                      child: _buildSectionTitle('Roommates recomendados', onSeeAll: () {}),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildRecommendedRoommates(),
+                    ),
 
-          // Sección: Habitaciones cercanas
-          SliverToBoxAdapter(
-            child: _buildSectionTitle('Habitaciones cercanas', onSeeAll: () {}),
-          ),
-          SliverToBoxAdapter(
-            child: _buildNearbyRooms(),
-          ),
+                    // 4. Sección: Habitaciones (CON DATOS REALES DE SUPABASE)
+                    SliverToBoxAdapter(
+                      child: _buildSectionTitle('Habitaciones recientes', onSeeAll: () {}),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildRealListingsList(state),
+                    ),
 
-          // Sección: Tus matches
-          SliverToBoxAdapter(
-            child: _buildSectionTitle('Tus matches', onSeeAll: () {}),
-          ),
-          SliverToBoxAdapter(
-            child: _buildMatches(),
-          ),
+                    // 5. Sección: Tus matches (Restaurada - Datos Mock)
+                    SliverToBoxAdapter(
+                      child: _buildSectionTitle('Tus matches', onSeeAll: () {}),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildMatches(),
+                    ),
 
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 100),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 100),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
-        ],
+        ),
       ),
     );
   }
+
+  // --- WIDGETS DE LA UI ORIGINAL RESTAURADOS ---
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
@@ -69,10 +96,11 @@ class HomeTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Buscando en:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondaryDark,
+                  'Hola, ${user.displayName}',
+                  style: const TextStyle(
+                    fontSize: 20, // Ajusté un poco el tamaño
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -80,16 +108,16 @@ class HomeTab extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.location_on_rounded,
-                      size: 18,
+                      size: 16,
                       color: AppTheme.primaryColor,
                     ),
                     const SizedBox(width: 4),
-                    Text(
+                    const Text(
                       'Quito, Ecuador',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimaryDark,
+                        color: AppTheme.textSecondaryDark,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -213,7 +241,7 @@ class HomeTab extends StatelessWidget {
           if (onSeeAll != null)
             TextButton(
               onPressed: onSeeAll,
-              child: Text(
+              child: const Text(
                 'Ver todo',
                 style: TextStyle(
                   fontSize: 13,
@@ -227,6 +255,7 @@ class HomeTab extends StatelessWidget {
     );
   }
 
+  // --- SECCIÓN ROOMMATES (ORIGINAL - DATOS MOCK) ---
   Widget _buildRecommendedRoommates() {
     return SizedBox(
       height: 180,
@@ -265,15 +294,14 @@ class HomeTab extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Avatar placeholder
                 Container(
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primaryColor.withValues(alpha: 0.3),
-                        AppTheme.primaryDark.withValues(alpha: 0.3),
+                        AppTheme.primaryColor.withOpacity(0.3),
+                        AppTheme.primaryDark.withOpacity(0.3),
                       ],
                     ),
                     shape: BoxShape.circle,
@@ -311,10 +339,10 @@ class HomeTab extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    color: AppTheme.primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Ver perfil',
                     style: TextStyle(
                       fontSize: 10,
@@ -326,141 +354,129 @@ class HomeTab extends StatelessWidget {
               ],
             ),
           ),
-          // Close button
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundDark.withValues(alpha: 0.8),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.close,
-                size: 14,
-                color: AppTheme.textSecondaryDark,
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildNearbyRooms() {
-    return SizedBox(
-      height: 200,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 4,
-        itemBuilder: (context, index) => _buildRoomCard(index),
+  // --- SECCIÓN PUBLICACIONES REALES (NUEVA LÓGICA) ---
+ Widget _buildRealListingsList(ListingState state) {
+    if (state is ListingLoading) {
+      return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+    } else if (state is ListingsLoaded) {
+      if (state.listings.isEmpty) {
+        return const SizedBox(height: 100, child: Center(child: Text("No hay habitaciones recientes", style: TextStyle(color: Colors.white54))));
+      }
+      return SizedBox(
+        height: 280, // Altura para el diseño "grande"
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          itemCount: state.listings.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 16),
+          itemBuilder: (context, index) {
+            return _buildListingCard(context, state.listings[index]);
+          },
+        ),
+      );
+    } else if (state is ListingError) {
+      return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+    }
+    return const SizedBox.shrink();
+  }
+
+  // ESTA ES LA CARD QUE TE GUSTÓ (DISEÑO MEJORADO)
+  Widget _buildListingCard(BuildContext context, ListingEntity listing) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ListingDetailPage(listing: listing)),
+        );
+      },
+      child: Container(
+        width: 220,
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.borderDark),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: listing.imageUrls.isNotEmpty
+                    ? Image.network(
+                        listing.imageUrls.first,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[800],
+                          child: const Icon(Icons.image_not_supported, color: Colors.white54),
+                        ),
+                      )
+                    : Container(
+                        color: Colors.grey[800],
+                        child: const Center(child: Icon(Icons.home, color: Colors.white54, size: 40)),
+                      ),
+              ),
+            ),
+            // Info
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    listing.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, size: 12, color: AppTheme.textSecondaryDark),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          listing.address,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '\$${listing.price.toStringAsFixed(0)} / mes',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRoomCard(int index) {
-    final prices = ['\$350', '\$420', '\$280', '\$500'];
-    final locations = ['La Floresta', 'La Mariscal', 'Cumbayá', 'Centro Norte'];
-    final types = [
-      'Habitación privada',
-      'Estudio',
-      'Habitación compartida',
-      'Departamento'
-    ];
-
-    return Container(
-      width: 200,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image placeholder
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    Icons.bed_rounded,
-                    size: 40,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppTheme.backgroundDark.withValues(alpha: 0.8),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.favorite_outline_rounded,
-                      size: 16,
-                      color: AppTheme.textPrimaryDark,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '${prices[index]}/',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimaryDark,
-                      ),
-                    ),
-                    Text(
-                      'mes',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondaryDark,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${locations[index]}, ${types[index]}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textSecondaryDark,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // --- SECCIÓN MATCHES (ORIGINAL - DATOS MOCK) ---
   Widget _buildMatches() {
     return Container(
       height: 80,
@@ -485,14 +501,14 @@ class HomeTab extends StatelessWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor
-                          .withValues(alpha: 0.2 + index * 0.1),
+                          .withOpacity(0.2 + index * 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(color: AppTheme.surfaceDark, width: 2),
                     ),
                     child: Center(
                       child: Text(
                         ['A', 'B', 'C'][index],
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor,
