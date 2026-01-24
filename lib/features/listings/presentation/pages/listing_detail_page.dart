@@ -1,13 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:get_it/get_it.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/listing_entity.dart';
+import '../../../chat/presentation/bloc/chat_bloc.dart';
+import '../../../chat/presentation/bloc/chat_event.dart';
+import '../../../chat/presentation/bloc/chat_state.dart';
+import '../../../chat/presentation/pages/chat_page.dart';
 
-class ListingDetailPage extends StatelessWidget {
+class ListingDetailPage extends StatefulWidget {
   final ListingEntity listing;
 
   const ListingDetailPage({super.key, required this.listing});
+
+  @override
+  State<ListingDetailPage> createState() => _ListingDetailPageState();
+}
+
+class _ListingDetailPageState extends State<ListingDetailPage> {
+  bool _isContactingHost = false;
+
+  ListingEntity get listing => widget.listing;
+
+  /// Verifica si el usuario actual es el dueño del listing
+  bool get _isOwnListing {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    return currentUserId != null && currentUserId == listing.userId;
+  }
+
+  Future<void> _contactHost() async {
+    if (_isContactingHost) return;
+
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes iniciar sesión para contactar')),
+      );
+      return;
+    }
+
+    // No permitir contactarse a sí mismo
+    if (_isOwnListing) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No puedes contactarte a ti mismo')),
+      );
+      return;
+    }
+
+    setState(() => _isContactingHost = true);
+
+    try {
+      final chatBloc = GetIt.I<ChatBloc>();
+
+      // Crear o obtener conversación existente
+      chatBloc.add(CreateConversation(
+        listingId: listing.id!,
+        hostId: listing.userId,
+      ));
+
+      // Escuchar el resultado
+      await for (final state in chatBloc.stream) {
+        if (state is ConversationCreated) {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatPage(
+                  conversationId: state.conversation.id,
+                  listingTitle: listing.title,
+                  otherUserName: state.conversation.otherUserName,
+                ),
+              ),
+            );
+          }
+          break;
+        } else if (state is ConversationCreateError) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+          break;
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isContactingHost = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -269,30 +358,40 @@ class ListingDetailPage extends StatelessWidget {
           ),
         ],
       ),
-      // Botón flotante de contacto (Visual)
-      floatingActionButton: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: ElevatedButton(
-          onPressed: () {
-            // TODO: Implementar chat
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Chat próximamente...')),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryColor,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-          child: const Text(
-            'Contactar al anfitrión',
-            style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ),
-      ),
+      // Botón flotante de contacto - solo si no es el dueño
+      floatingActionButton: _isOwnListing
+          ? null
+          : Container(
+              width: MediaQuery.of(context).size.width * 0.9,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ElevatedButton(
+                onPressed: _isContactingHost ? null : _contactHost,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  disabledBackgroundColor:
+                      AppTheme.primaryColor.withValues(alpha: 0.6),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: _isContactingHost
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Contactar al anfitrión',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+              ),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
