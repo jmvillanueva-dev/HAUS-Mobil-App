@@ -6,6 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'core/constants/app_constants.dart';
 import 'injection_container.config.dart';
+import 'features/locations/domain/usecases/get_my_locations_usecase.dart';
+import 'features/locations/presentation/bloc/locations_bloc.dart';
 
 final getIt = GetIt.instance;
 final sl = GetIt.instance;
@@ -38,7 +40,9 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
 
-  
+  // Locations Feature
+  getIt.registerLazySingleton(() => GetMyLocationsUseCase(getIt()));
+  getIt.registerFactory(() => LocationsBloc(getMyLocations: getIt()));
 
   // Initialize injectable
   getIt.init();

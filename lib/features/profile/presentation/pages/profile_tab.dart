@@ -5,6 +5,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/pages/onboarding_page.dart';
+import '../../../locations/presentation/pages/my_locations_page.dart';
 
 /// Tab de Perfil - Diseño limpio y moderno
 class ProfileTab extends StatelessWidget {
@@ -152,7 +153,13 @@ class ProfileTab extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.location_on_outlined,
                     label: 'Mis Ubicaciones',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => MyLocationsPage(user: user),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
                   _buildMenuItem(
