@@ -145,3 +145,50 @@ Bucket para almacenar fotos de perfil de usuarios.
 - El trigger `on_auth_user_created` extrae `first_name`, `last_name` y `role` del `raw_user_meta_data` de Supabase Auth
 - El campo `status` solo puede ser modificado por el Service Role (admin)
 - El campo `verification_doc_url` es para almacenar el documento subido para verificación
+
+---
+
+## 💬 Sistema de Chat
+
+### Tabla `conversations`
+
+Almacena las conversaciones entre usuarios sobre listings específicos.
+
+| Campo             | Tipo      | Descripción                                        |
+| ----------------- | --------- | -------------------------------------------------- |
+| `id`              | UUID      | Primary Key                                        |
+| `listing_id`      | UUID      | FK → `listings(id)` - Listing de la conversación   |
+| `user_id`         | UUID      | FK → `auth.users(id)` - Usuario buscador           |
+| `host_id`         | UUID      | FK → `auth.users(id)` - Anfitrión/dueño            |
+| `last_message_at` | TIMESTAMP | Timestamp del último mensaje                       |
+| `created_at`      | TIMESTAMP | Fecha de creación                                  |
+
+**Restricción**: Solo una conversación por combinación `(listing_id, user_id)`
+
+### Tabla `messages`
+
+Almacena los mensajes individuales de cada conversación.
+
+| Campo             | Tipo      | Descripción                             |
+| ----------------- | --------- | --------------------------------------- |
+| `id`              | UUID      | Primary Key                             |
+| `conversation_id` | UUID      | FK → `conversations(id)`                |
+| `sender_id`       | UUID      | FK → `auth.users(id)` - Quién envió     |
+| `content`         | TEXT      | Contenido del mensaje                   |
+| `is_read`         | BOOLEAN   | Si fue leído por el receptor            |
+| `created_at`      | TIMESTAMP | Fecha de creación                       |
+
+### Políticas RLS (Chat)
+
+| Tabla           | Operación | Condición                                  |
+| --------------- | --------- | ------------------------------------------ |
+| `conversations` | SELECT    | Usuario es `user_id` o `host_id`           |
+| `conversations` | INSERT    | `auth.uid() = user_id`                     |
+| `messages`      | SELECT    | Usuario es participante de la conversación |
+| `messages`      | INSERT    | Usuario es participante y es el sender     |
+| `messages`      | UPDATE    | Solo receptor puede marcar como leído      |
+
+### Realtime
+
+Ambas tablas están habilitadas para Supabase Realtime para chat en tiempo real.
+
