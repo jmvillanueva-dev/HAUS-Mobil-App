@@ -9,7 +9,12 @@ import 'injection_container.config.dart';
 import 'features/locations/domain/usecases/get_my_locations_usecase.dart';
 import 'features/locations/domain/usecases/update_location_usecase.dart';
 import 'features/locations/presentation/bloc/locations_bloc.dart';
-import 'core/network/network_info.dart';
+
+// Chat Feature imports
+import 'features/chat/data/datasources/chat_remote_datasource.dart';
+import 'features/chat/data/repositories/chat_repository_impl.dart';
+import 'features/chat/domain/repositories/chat_repository.dart';
+import 'features/chat/presentation/bloc/chat_bloc.dart';
 
 final getIt = GetIt.instance;
 final sl = GetIt.instance;
@@ -42,19 +47,36 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
 
-  // Locations Feature - Manual registrations for items not yet annotated
+  // Locations Feature - Manual registrations for Use Cases (registered before init)
   // Use Cases
   getIt.registerLazySingleton(() => GetMyLocationsUseCase(getIt()));
   getIt.registerLazySingleton(() => UpdateLocationUseCase(getIt()));
 
-  // Bloc
-  getIt.registerFactory(() => LocationsBloc(
-        getMyLocations: getIt(),
-        repository: getIt(),
-      ));
+  // ====== Chat Feature ======
+  // Data Sources
+  getIt.registerLazySingleton<ChatRemoteDataSource>(
+    () => ChatRemoteDataSourceImpl(getIt<SupabaseClient>()),
+  );
+
+  // Repositories
+  getIt.registerLazySingleton<ChatRepository>(
+    () => ChatRepositoryImpl(getIt<ChatRemoteDataSource>()),
+  );
+
+  // Bloc - Factory to create new instance each time
+  getIt.registerFactory<ChatBloc>(
+    () => ChatBloc(chatRepository: getIt<ChatRepository>()),
+  );
 
   // Initialize injectable (this will register annotated classes)
   getIt.init();
+
+  // ====== Post-init registrations ======
+  // LocationsBloc depends on LocationRepository which is registered via injectable
+  getIt.registerFactory(() => LocationsBloc(
+        getMyLocations: getIt<GetMyLocationsUseCase>(),
+        repository: getIt(),
+      ));
 }
 
 Future<void> _handleDeepLink(Uri uri) async {
