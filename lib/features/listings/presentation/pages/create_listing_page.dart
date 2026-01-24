@@ -2,12 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/loading_overlay.dart'; 
 import '../../domain/entities/listing_entity.dart';
 import '../bloc/listing_bloc.dart';
 import '../bloc/listing_event.dart';
 import '../bloc/listing_state.dart';
+import 'location_picker_page.dart';
 
 class CreateListingPage extends StatefulWidget {
   final String userId;
@@ -24,6 +26,17 @@ class _CreateListingPageState extends State<CreateListingPage> {
   final _priceController = TextEditingController();
   final _addressController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  // Coordenadas seleccionadas
+  LatLng? _selectedLocation;
+
+  // Amenities disponibles y seleccionados
+  final List<String> _availableAmenities = [
+    'Wifi', 'Cocina', 'Lavadora', 'TV', 
+    'Aire Acondicionado', 'Baño Privado', 'Escritorio', 'Gimnasio',
+    'Pet Friendly', 'Estacionamiento'
+  ];
+  final List<String> _selectedAmenities = [];
   
   final List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
@@ -37,11 +50,34 @@ class _CreateListingPageState extends State<CreateListingPage> {
     }
   }
 
+  // Navegar al mapa para seleccionar ubicación
+  Future<void> _pickLocation() async {
+    final result = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(builder: (_) => const LocationPickerPage()),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedLocation = result;
+        // Opcional: Podrías llenar _addressController con lat/lng si quieres
+        // _addressController.text = "${result.latitude}, ${result.longitude}";
+      });
+    }
+  }
+
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_selectedImages.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Debes agregar al menos una imagen')),
+        );
+        return;
+      }
+
+      if (_selectedLocation == null) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor selecciona una ubicación en el mapa')),
         );
         return;
       }
@@ -52,7 +88,9 @@ class _CreateListingPageState extends State<CreateListingPage> {
         description: _descriptionController.text,
         price: double.parse(_priceController.text),
         address: _addressController.text,
-        amenities: const [], // TODO: Implementar selección de amenities
+        latitude: _selectedLocation!.latitude, // Enviamos latitud
+        longitude: _selectedLocation!.longitude, // Enviamos longitud
+        amenities: _selectedAmenities, // Enviamos amenities 
         imageUrls: const [], // Se llenará en el servidor
       );
 
@@ -145,10 +183,53 @@ class _CreateListingPageState extends State<CreateListingPage> {
                             icon: Icons.attach_money,
                             isNumber: true),
                         const SizedBox(height: 16),
+
+                        _buildLocationSelector(),
+                        const SizedBox(height: 16),
+
                         _buildTextField(
                             controller: _addressController,
-                            label: 'Dirección / Zona',
-                            icon: Icons.location_on_outlined),
+                            label: 'Dirección escrita (Referencia)',
+                            icon: Icons.location_city),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Servicios incluidos',
+                          style: TextStyle(
+                              color: Colors.white, 
+                              fontSize: 16, 
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children: _availableAmenities.map((amenity) {
+                            final isSelected = _selectedAmenities.contains(amenity);
+                            return FilterChip(
+                              label: Text(amenity),
+                              selected: isSelected,
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedAmenities.add(amenity);
+                                  } else {
+                                    _selectedAmenities.remove(amenity);
+                                  }
+                                });
+                              },
+                              backgroundColor: AppTheme.surfaceDark,
+                              selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                              checkmarkColor: AppTheme.primaryColor,
+                              labelStyle: TextStyle(
+                                color: isSelected ? AppTheme.primaryColor : Colors.white,
+                              ),
+                              side: BorderSide(
+                                color: isSelected ? AppTheme.primaryColor : AppTheme.borderDark,
+                              ),
+                            );
+                          }).toList(),
+                        ),
                         const SizedBox(height: 16),
                         _buildTextField(
                             controller: _descriptionController,
@@ -187,6 +268,43 @@ class _CreateListingPageState extends State<CreateListingPage> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  // Widget para mostrar si ya seleccionó ubicación o invitar a hacerlo
+  Widget _buildLocationSelector() {
+    return GestureDetector(
+      onTap: _pickLocation,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _selectedLocation != null ? AppTheme.primaryColor : AppTheme.borderDark
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.map_rounded, 
+              color: _selectedLocation != null ? AppTheme.primaryColor : AppTheme.textSecondaryDark
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _selectedLocation != null 
+                  ? 'Ubicación seleccionada (Lat: ${_selectedLocation!.latitude.toStringAsFixed(4)}...)' 
+                  : 'Seleccionar ubicación en el mapa',
+                style: TextStyle(
+                  color: _selectedLocation != null ? Colors.white : AppTheme.textSecondaryDark,
+                ),
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.textSecondaryDark),
+          ],
         ),
       ),
     );
