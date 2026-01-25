@@ -93,142 +93,211 @@ class HomeTab extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          // Avatar de usuario
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppTheme.primaryColor, width: 2),
-              image: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
-                  ? DecorationImage(
-                      image: NetworkImage(user.avatarUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-              color: AppTheme.surfaceDark,
-            ),
-            child: user.avatarUrl == null || user.avatarUrl!.isEmpty
-                ? Center(
-                    child: Text(
-                      user.displayName.isNotEmpty
-                          ? user.displayName.substring(0, 1).toUpperCase()
-                          : 'U',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  )
-                : null,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          // Gradiente sutil que mantiene el tema oscuro pero destaca
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.surfaceDarkElevated,
+              AppTheme.surfaceDark.withOpacity(0.95),
+            ],
           ),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hola, ${user.firstName ?? user.displayName}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_rounded,
-                      size: 16,
-                      color: AppTheme.primaryColor,
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'Quito, Ecuador',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textSecondaryDark,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 20,
-                      color: AppTheme.textSecondaryDark,
-                    ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppTheme.primaryColor.withOpacity(0.3),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Avatar de usuario con efecto glow
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.primaryDark,
                   ],
                 ),
-              ],
-            ),
-          ),
-          // Notification bell with badge
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationsPage()),
-              );
-            },
-            child: BlocBuilder<NotificationBloc, NotificationState>(
-              builder: (context, state) {
-                final unreadCount =
-                    state is NotificationLoaded ? state.unreadCount : 0;
-                return Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceDark,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.borderDark),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.4),
+                    blurRadius: 12,
+                    spreadRadius: 1,
                   ),
-                  child: Stack(
-                    children: [
-                      const Center(
-                        child: Icon(
-                          Icons.notifications_outlined,
-                          color: AppTheme.textPrimaryDark,
-                          size: 22,
-                        ),
-                      ),
-                      if (unreadCount > 0)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              unreadCount > 99 ? '99+' : '$unreadCount',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
+                ],
+              ),
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.surfaceDark,
+                  image: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(user.avatarUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: user.avatarUrl == null || user.avatarUrl!.isEmpty
+                    ? Center(
+                        child: Text(
+                          user.displayName.isNotEmpty
+                              ? user.displayName.substring(0, 1).toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
                           ),
                         ),
-                    ],
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hola, ${user.firstName ?? user.displayName}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimaryDark,
+                      letterSpacing: 0.3,
+                    ),
                   ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.location_on_rounded,
+                          size: 14,
+                          color: AppTheme.primaryColor,
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Quito, Ecuador',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondaryDark,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Notification bell with badge
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
                 );
               },
+              child: BlocBuilder<NotificationBloc, NotificationState>(
+                builder: (context, state) {
+                  final unreadCount =
+                      state is NotificationLoaded ? state.unreadCount : 0;
+                  return Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceDark,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.primaryColor.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        const Center(
+                          child: Icon(
+                            Icons.notifications_outlined,
+                            color: AppTheme.textPrimaryDark,
+                            size: 24,
+                          ),
+                        ),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 6,
+                            top: 6,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        AppTheme.primaryColor.withOpacity(0.5),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              child: Text(
+                                unreadCount > 99 ? '99+' : '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
