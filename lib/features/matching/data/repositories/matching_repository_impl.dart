@@ -87,4 +87,14 @@ class MatchingRepositoryImpl implements MatchingRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<MatchCandidate>>> getIncomingLikes() async {
+    try {
+      final candidates = await _dataSource.getIncomingLikes();
+      return Right(candidates);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

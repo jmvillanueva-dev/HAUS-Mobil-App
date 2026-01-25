@@ -121,6 +121,22 @@ class MatchingDataSource {
     return response as int? ?? 0;
   }
 
+  /// Obtiene usuarios que dieron like al usuario actual
+  Future<List<MatchCandidate>> getIncomingLikes() async {
+    if (_currentUserId == null) {
+      throw Exception('Usuario no autenticado');
+    }
+
+    final response = await _client.rpc(
+      'get_incoming_likes',
+      params: {'for_user_id': _currentUserId},
+    );
+
+    return (response as List)
+        .map((json) => MatchCandidate.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Verifica si ya existe una interacción con un usuario
   Future<bool> hasInteractionWith(String targetUserId) async {
     if (_currentUserId == null) return false;

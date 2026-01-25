@@ -16,10 +16,12 @@ import 'home_tab.dart';
 /// Página principal con navegación por tabs estilo "Floating Pill"
 class MainPage extends StatefulWidget {
   final UserEntity user;
+  final int initialIndex;
 
   const MainPage({
     super.key,
     required this.user,
+    this.initialIndex = 0,
   });
 
   @override
@@ -33,6 +35,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _currentUser = widget.user;
     // El modal de perfil incompleto ya no es necesario
     // porque el onboarding es obligatorio antes de llegar aquí

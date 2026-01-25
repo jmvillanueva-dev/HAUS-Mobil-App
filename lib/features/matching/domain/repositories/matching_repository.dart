@@ -23,6 +23,9 @@ abstract class MatchingRepository {
   /// Verificar si quedan likes disponibles hoy
   Future<Either<Failure, bool>> hasRemainingLikes();
 
+  /// Obtener usuarios que dieron like al usuario actual (solicitudes)
+  Future<Either<Failure, List<MatchCandidate>>> getIncomingLikes();
+
   /// Constante del límite diario de likes
   static const int dailyLikeLimit = 10;
 }
