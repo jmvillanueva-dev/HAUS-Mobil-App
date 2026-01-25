@@ -39,14 +39,60 @@ class _ChatPageState extends State<ChatPage> {
   late ChatBloc _chatBloc;
   final ScrollController _scrollController = ScrollController();
 
+  // Variables locales para datos del listing (pueden venir del widget o cargarse)
+  String? _listingId;
+  String? _listingTitle;
+  String? _listingImageUrl;
+  double? _listingPrice;
+
   @override
   void initState() {
     super.initState();
+
+    // Inicializar data local
+    _listingId = widget.listingId;
+    _listingTitle = widget.listingTitle;
+    _listingImageUrl = widget.listingImageUrl;
+    _listingPrice = widget.listingPrice;
+
     _chatBloc = GetIt.I<ChatBloc>();
     // Suscribirse a mensajes en tiempo real
     _chatBloc.add(SubscribeToMessages(widget.conversationId));
     // Marcar mensajes como leídos
     _chatBloc.add(MarkMessagesAsRead(widget.conversationId));
+
+    // Si faltan datos del listing, intentar cargarlos
+    if (_listingTitle == null || _listingId == null) {
+      _loadConversationDetails();
+    }
+  }
+
+  Future<void> _loadConversationDetails() async {
+    try {
+      final supabase = GetIt.I<SupabaseClient>();
+      // Obtener listings asociados a esta conversación
+      final response = await supabase
+          .from('conversations')
+          .select('listings(id, title, price, image_urls)')
+          .eq('id', widget.conversationId)
+          .maybeSingle();
+
+      if (response != null && response['listings'] != null && mounted) {
+        final listing = response['listings'];
+        setState(() {
+          _listingId = listing['id'];
+          _listingTitle = listing['title'];
+          _listingPrice = (listing['price'] as num?)?.toDouble();
+
+          final images = listing['image_urls'] as List?;
+          if (images != null && images.isNotEmpty) {
+            _listingImageUrl = images[0] as String;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading conversation details: $e');
+    }
   }
 
   @override
@@ -68,7 +114,7 @@ class _ChatPageState extends State<ChatPage> {
 
   /// Navegar al detalle del listing
   Future<void> _navigateToListingDetail() async {
-    if (widget.listingId == null) return;
+    if (_listingId == null) return;
 
     try {
       // Obtener el listing desde Supabase
@@ -76,7 +122,7 @@ class _ChatPageState extends State<ChatPage> {
       final response = await supabase
           .from('listings')
           .select()
-          .eq('id', widget.listingId!)
+          .eq('id', _listingId!)
           .maybeSingle();
 
       if (response != null && mounted) {
@@ -127,12 +173,11 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             // Card del listing (si hay datos)
             ListingChatHeader(
-              listingTitle: widget.listingTitle,
-              listingImageUrl: widget.listingImageUrl,
-              listingPrice: widget.listingPrice,
-              onTap: widget.listingId != null
-                  ? () => _navigateToListingDetail()
-                  : null,
+              listingTitle: _listingTitle,
+              listingImageUrl: _listingImageUrl,
+              listingPrice: _listingPrice,
+              onTap:
+                  _listingId != null ? () => _navigateToListingDetail() : null,
             ),
 
             // Lista de mensajes

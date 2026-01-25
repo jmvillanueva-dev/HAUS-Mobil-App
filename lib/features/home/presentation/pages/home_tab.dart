@@ -10,6 +10,8 @@ import '../../../listings/presentation/bloc/listing_state.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 import '../../../listings/presentation/pages/listing_detail_page.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
+import '../../../notifications/presentation/bloc/notification_bloc.dart';
+import '../../../notifications/presentation/bloc/notification_state.dart';
 
 /// Tab de Inicio - Feed de habitaciones y roommates recomendados
 class HomeTab extends StatelessWidget {
@@ -166,7 +168,7 @@ class HomeTab extends StatelessWidget {
               ],
             ),
           ),
-          // Notification bell
+          // Notification bell with badge
           GestureDetector(
             onTap: () {
               Navigator.push(
@@ -174,21 +176,56 @@ class HomeTab extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const NotificationsPage()),
               );
             },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.borderDark),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.notifications_outlined,
-                  color: AppTheme.textPrimaryDark,
-                  size: 22,
-                ),
-              ),
+            child: BlocBuilder<NotificationBloc, NotificationState>(
+              builder: (context, state) {
+                final unreadCount =
+                    state is NotificationLoaded ? state.unreadCount : 0;
+                return Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceDark,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderDark),
+                  ),
+                  child: Stack(
+                    children: [
+                      const Center(
+                        child: Icon(
+                          Icons.notifications_outlined,
+                          color: AppTheme.textPrimaryDark,
+                          size: 22,
+                        ),
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              unreadCount > 99 ? '99+' : '$unreadCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
