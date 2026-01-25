@@ -9,7 +9,6 @@ import '../../../listings/presentation/bloc/listing_event.dart';
 import '../../../listings/presentation/bloc/listing_state.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 import '../../../listings/presentation/pages/listing_detail_page.dart';
-import '../../../notifications/presentation/pages/notifications_page.dart';
 
 /// Tab de Inicio - Feed de habitaciones y roommates recomendados
 class HomeTab extends StatelessWidget {
@@ -94,14 +93,46 @@ class HomeTab extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       child: Row(
         children: [
+          // Avatar de usuario
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppTheme.primaryColor, width: 2),
+              image: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(user.avatarUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+              color: AppTheme.surfaceDark,
+            ),
+            child: user.avatarUrl == null || user.avatarUrl!.isEmpty
+                ? Center(
+                    child: Text(
+                      user.displayName.isNotEmpty
+                          ? user.displayName.substring(0, 1).toUpperCase()
+                          : 'U',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hola, ${user.displayName}',
+                  'Hola, ${user.firstName ?? user.displayName}',
                   style: const TextStyle(
-                    fontSize: 20, // Ajusté un poco el tamaño
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -135,28 +166,36 @@ class HomeTab extends StatelessWidget {
             ),
           ),
           // Notification bell
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationsPage()),
-              );
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.borderDark),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.notifications_outlined,
-                  color: AppTheme.textPrimaryDark,
-                  size: 22,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceDark,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderDark),
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Icon(
+                    Icons.notifications_outlined,
+                    color: AppTheme.textPrimaryDark,
+                    size: 22,
+                  ),
                 ),
-              ),
+                Positioned(
+                  right: 10,
+                  top: 10,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
