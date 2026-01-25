@@ -13,6 +13,7 @@ abstract class ListingRemoteDataSource {
   Future<ListingModel> updateListing(
       ListingEntity listing, List<File>? newImages);
   Future<void> deleteListing(String id);
+  Future<ListingModel> getListingById(String id);
 }
 
 @LazySingleton(as: ListingRemoteDataSource)
@@ -170,6 +171,20 @@ class ListingRemoteDataSourceImpl implements ListingRemoteDataSource {
   Future<void> deleteListing(String id) async {
     try {
       await supabaseClient.from('listings').delete().eq('id', id);
+    } catch (e) {
+      throw ServerFailure(e.toString());
+    }
+  }
+
+  @override
+  Future<ListingModel> getListingById(String id) async {
+    try {
+      final response = await supabaseClient
+          .from('listings')
+          .select('*, is_available')
+          .eq('id', id)
+          .single();
+      return ListingModel.fromJson(response);
     } catch (e) {
       throw ServerFailure(e.toString());
     }

@@ -74,4 +74,14 @@ class ListingRepositoryImpl implements ListingRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, ListingEntity>> getListingById(String id) async {
+    try {
+      final result = await remoteDataSource.getListingById(id);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

@@ -13,4 +13,5 @@ abstract class ListingRepository {
   Future<Either<Failure, ListingEntity>> updateListing(
       ListingEntity listing, List<File>? newImages);
   Future<Either<Failure, void>> deleteListing(String listingId);
+  Future<Either<Failure, ListingEntity>> getListingById(String id);
 }

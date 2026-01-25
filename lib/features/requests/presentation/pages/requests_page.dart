@@ -7,6 +7,8 @@ import '../bloc/request_bloc.dart';
 import '../bloc/request_event.dart';
 import '../bloc/request_state.dart';
 import '../../../../core/services/pdf_generator_service.dart';
+import '../../../listings/domain/repositories/listing_repository.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 
@@ -145,46 +147,82 @@ class _RequestCard extends StatelessWidget {
                   icon: const Icon(Icons.picture_as_pdf, color: Colors.green),
                   tooltip: 'Descargar Carta de Aceptación',
                   onPressed: () async {
+                    // Show loading dialog
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+
                     try {
-                      // Simulating missing data as per requirements
-                      final mockListing = ListingEntity(
-                        id: request.listingId,
-                        userId: request.hostId,
-                        title: request.listingTitle ?? 'Propiedad',
-                        description: 'Descripción simulada de la propiedad.',
-                        price: 0.0, // Precio no disponible en request
-                        housingType: 'Apartamento',
-                        city: 'Ciudad',
-                        neighborhood: 'Barrio',
-                        address: 'Dirección simulada 123',
-                        amenities: ['Wifi', 'Cocina', 'Lavadora'],
-                        houseRules: ['No fumar', 'No fiestas'],
-                        imageUrls: [],
-                      );
+                      // Fetch real data
+                      final listingRepo = GetIt.I<ListingRepository>();
+                      final authRepo = GetIt.I<AuthRepository>();
 
-                      final mockHost = UserEntity(
-                        id: request.hostId,
-                        email: 'host@haus.app',
-                        firstName: 'Anfitrión',
-                        lastName: 'Haus',
-                      );
+                      final listingResult =
+                          await listingRepo.getListingById(request.listingId);
+                      final hostResult =
+                          await authRepo.getProfile(request.hostId);
 
-                      await PdfGeneratorService().generateAcceptanceLetter(
-                        listing: mockListing,
-                        request: request,
-                        host: mockHost,
-                      );
-
+                      // Close loading dialog
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('PDF generado correctamente')),
+                        Navigator.of(context).pop();
+                      }
+
+                      // Check results
+                      ListingEntity? listing;
+                      UserEntity? host;
+
+                      listingResult.fold(
+                        (failure) => null,
+                        (r) => listing = r,
+                      );
+
+                      hostResult.fold(
+                        (failure) => null,
+                        (r) => host = r,
+                      );
+
+                      if (listing != null && host != null) {
+                        await PdfGeneratorService().generateAcceptanceLetter(
+                          listing: listing!,
+                          request: request,
+                          host: host!,
                         );
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('PDF generado correctamente'),
+                                backgroundColor: Colors.green),
+                          );
+                        }
+                      } else {
+                        throw Exception(
+                            'No se pudieron obtener los datos completos del inmueble o anfitrión.');
                       }
                     } catch (e) {
+                      // Close loading dialog if open
                       if (context.mounted) {
+                        // A bit hacky to check if dialog is still open, but popping safely is key
+                        // If we are here, likely we popped already or we need to pop.
+                        // However, better safe approach:
+                        // We popped before checking results. If exception happened before pop, we need to pop.
+                        // Re-structuring slightly: pop is called after fetches.
+                        // But if fetching throws, we are in catch block and dialog is still Open.
+                        // Let's ensure we pop if exception happend during fetch.
+                        // NOTE: The previous pop was inside 'try', so if exception occured before, dialog is open.
+                        // We can try to pop; if it fails (because navigation stack changed), catch it or check.
+                        // Simplest: use a flag or check canPop.
+                        Navigator.of(context).maybePop();
+
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error al generar PDF: $e')),
+                          SnackBar(
+                            content: Text('Error al generar PDF: $e'),
+                            backgroundColor: Colors.red,
+                          ),
                         );
                       }
                     }

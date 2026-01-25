@@ -7,6 +7,17 @@ import '../../features/requests/domain/entities/listing_request_entity.dart';
 import 'package:intl/intl.dart';
 
 class PdfGeneratorService {
+  // Colores de Marca (Estilo Startup Moderna)
+  static const PdfColor _primaryColor = PdfColor.fromInt(0xff263238); // Dark Grey
+  static const PdfColor _accentColor = PdfColor.fromInt(0xff00BFA5); // Teal Accent
+  static const PdfColor _textLightColor = PdfColor.fromInt(0xff78909c); // Blue Grey
+  static const PdfColor _lightBackground = PdfColor.fromInt(0xfff5f7f8); // Very light grey
+  
+  // CORRECCIÓN: Colores mucho más sutiles (más transparentes) para la marca de agua
+  // Alpha bajado a 0.05 (5%) y 0.1 (10%) para que no tape el texto
+  static const PdfColor _watermarkColor = PdfColor(0, 0.5, 0, 0.05); 
+  static const PdfColor _watermarkBorderColor = PdfColor(0, 0.5, 0, 0.1);
+
   Future<void> generateAcceptanceLetter({
     required ListingEntity listing,
     required ListingRequestEntity request,
@@ -14,47 +25,264 @@ class PdfGeneratorService {
   }) async {
     final pdf = pw.Document();
 
-    final fontRegular = await PdfGoogleFonts.openSansRegular();
-    final fontBold = await PdfGoogleFonts.openSansBold();
+    final fontRegular = await PdfGoogleFonts.interRegular();
+    final fontBold = await PdfGoogleFonts.interBold();
+    final fontSemiBold = await PdfGoogleFonts.interMedium();
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
         build: (pw.Context context) {
           return pw.Stack(
             children: [
               _buildWatermark(fontBold),
-              _buildContent(
-                  context, listing, request, host, fontRegular, fontBold),
+              
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(fontBold, request.id),
+                  pw.SizedBox(height: 40),
+                  _buildIntro(fontRegular),
+                  pw.SizedBox(height: 30),
+                  _buildPeopleSection(host, request, fontBold, fontRegular, fontSemiBold),
+                  pw.SizedBox(height: 30),
+                  _buildPropertySection(listing, fontBold, fontRegular, fontSemiBold),
+                  pw.Spacer(),
+                  _buildSignatures(host, request, fontRegular),
+                  _buildFooter(fontRegular),
+                ],
+              ),
             ],
           );
         },
       ),
     );
 
-    // Prompt user to download/print
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: 'Carta_Aceptacion_${request.id}.pdf',
+      name: 'Haus_PreContrato_${request.id.substring(0, 6)}.pdf',
     );
   }
 
+  pw.Widget _buildHeader(pw.Font fontBold, String requestId) {
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: pw.CrossAxisAlignment.end,
+      children: [
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: const pw.BoxDecoration(
+                color: _primaryColor,
+                borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
+              ),
+              child: pw.Text('HAUS', style: pw.TextStyle(font: fontBold, color: PdfColors.white, fontSize: 20)),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text('Conecta. Comparte. Vive.', style: const pw.TextStyle(color: _textLightColor, fontSize: 8)),
+          ],
+        ),
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.end,
+          children: [
+            pw.Text('CARTA DE ACEPTACIÓN', style: pw.TextStyle(font: fontBold, fontSize: 14, color: _textLightColor)),
+            pw.Text('#${requestId.substring(0, 8).toUpperCase()}', style: pw.TextStyle(font: fontBold, fontSize: 10, color: _accentColor)),
+          ],
+        )
+      ],
+    );
+  }
+
+  pw.Widget _buildIntro(pw.Font fontRegular) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(left: pw.BorderSide(color: _accentColor, width: 3)),
+        color: _lightBackground,
+      ),
+      child: pw.Text(
+        'Por medio de la presente, se hace constar que el Propietario ha evaluado y aprobado satisfactoriamente la solicitud de arrendamiento presentada por el Solicitante. Este documento formaliza la intención firme de ambas partes de proceder con la firma del contrato de arrendamiento definitivo, sujeto a los términos y condiciones aquí detallados, los cuales han sido revisados y aceptados preliminarmente en la plataforma HAUS.',
+        style: pw.TextStyle(
+          font: fontRegular, 
+          fontSize: 10, 
+          color: _primaryColor, 
+          lineSpacing: 1.5
+        ),
+        textAlign: pw.TextAlign.justify,
+      ),
+    );
+  }
+
+  pw.Widget _buildPeopleSection(
+    UserEntity host, 
+    ListingRequestEntity request, 
+    pw.Font fontBold, 
+    pw.Font fontRegular,
+    pw.Font fontSemiBold
+  ) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('ANFITRIÓN (PROPIETARIO)', style: pw.TextStyle(font: fontBold, fontSize: 9, color: _textLightColor)),
+              pw.SizedBox(height: 4),
+              pw.Text(host.displayName.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 12, color: _primaryColor)),
+              pw.Text(host.email, style: pw.TextStyle(font: fontRegular, fontSize: 10, color: _primaryColor)),
+            ],
+          ),
+        ),
+        pw.Container(width: 1, height: 30, color: PdfColors.grey300, margin: const pw.EdgeInsets.symmetric(horizontal: 20)),
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('SOLICITANTE (INQUILINO)', style: pw.TextStyle(font: fontBold, fontSize: 9, color: _textLightColor)),
+              pw.SizedBox(height: 4),
+              pw.Text(request.requesterName?.toUpperCase() ?? 'DESCONOCIDO', style: pw.TextStyle(font: fontBold, fontSize: 12, color: _primaryColor)),
+              pw.Text('ID Verificado: ${request.requesterId.substring(0,8)}', style: pw.TextStyle(font: fontRegular, fontSize: 10, color: _primaryColor)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPropertySection(
+    ListingEntity listing, 
+    pw.Font fontBold, 
+    pw.Font fontRegular,
+    pw.Font fontSemiBold
+  ) {
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+        border: pw.Border.all(color: PdfColors.grey200),
+      ),
+      child: pw.Column(
+        children: [
+          pw.Container(
+            padding: const pw.EdgeInsets.all(12),
+            decoration: const pw.BoxDecoration(
+              color: _lightBackground,
+              borderRadius: pw.BorderRadius.vertical(top: pw.Radius.circular(8)),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('DETALLES DE LA PROPIEDAD', style: pw.TextStyle(font: fontBold, fontSize: 10, color: _primaryColor)),
+                pw.Text(listing.housingType.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 10, color: _accentColor)),
+              ],
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(15),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _buildInfoRow('Dirección', listing.address, fontRegular, fontSemiBold),
+                pw.Divider(color: PdfColors.grey100),
+                _buildInfoRow('Ubicación', '${listing.neighborhood}, ${listing.city}', fontRegular, fontSemiBold),
+                pw.Divider(color: PdfColors.grey100),
+                
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Precio Acordado', style: pw.TextStyle(font: fontRegular, fontSize: 9, color: _textLightColor)),
+                        pw.Text('\$${listing.price.toStringAsFixed(2)} / mes', style: pw.TextStyle(font: fontBold, fontSize: 16, color: _primaryColor)),
+                      ],
+                    ),
+                    pw.Flexible(
+                      child: pw.Wrap(
+                        spacing: 5,
+                        runSpacing: 5,
+                        alignment: pw.WrapAlignment.end,
+                        children: listing.amenities.take(4).map((amenity) => 
+                          pw.Container(
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: pw.BoxDecoration(
+                              border: pw.Border.all(color: PdfColors.grey300),
+                              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10))
+                            ),
+                            child: pw.Text(amenity, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700))
+                          )
+                        ).toList(),
+                      ),
+                    )
+                  ],
+                ),
+
+                if (listing.houseRules.isNotEmpty) ...[
+                  pw.Divider(color: PdfColors.grey100),
+                  pw.SizedBox(height: 5),
+                  pw.Text('Reglas de la Casa', style: pw.TextStyle(font: fontRegular, fontSize: 9, color: _textLightColor)),
+                  pw.SizedBox(height: 6),
+                  pw.Wrap(
+                    spacing: 12,
+                    runSpacing: 6,
+                    children: listing.houseRules.map((rule) => 
+                      pw.Row(
+                        mainAxisSize: pw.MainAxisSize.min,
+                        children: [
+                          pw.Container(
+                            width: 4, 
+                            height: 4, 
+                            decoration: const pw.BoxDecoration(color: _accentColor, shape: pw.BoxShape.circle),
+                            margin: const pw.EdgeInsets.only(right: 6)
+                          ),
+                          pw.Text(rule, style: pw.TextStyle(font: fontSemiBold, fontSize: 10, color: _primaryColor)),
+                        ],
+                      )
+                    ).toList(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildInfoRow(String label, String value, pw.Font fontLabel, pw.Font fontValue) {
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      children: [
+        pw.Text(label, style: pw.TextStyle(font: fontLabel, fontSize: 10, color: _textLightColor)),
+        pw.Text(value, style: pw.TextStyle(font: fontValue, fontSize: 10, color: _primaryColor)),
+      ],
+    );
+  }
+
+  // CORRECCIÓN: Sello más pequeño y difuminado
   pw.Widget _buildWatermark(pw.Font font) {
-    return pw.Center(
+    return pw.Positioned(
+      bottom: 180, // Ajustado posición
+      right: 40,
       child: pw.Transform.rotate(
-        angle: -0.5,
+        angle: -0.3,
         child: pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          // Tamaño reducido (padding más pequeño)
+          padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: PdfColors.green, width: 5),
-            borderRadius: pw.BorderRadius.circular(10),
+            // Borde más fino y transparente
+            border: pw.Border.all(color: _watermarkBorderColor, width: 2),
+            borderRadius: pw.BorderRadius.circular(12),
           ),
           child: pw.Text(
             'APROBADO',
             style: pw.TextStyle(
               font: font,
-              fontSize: 60,
-              color: PdfColor(0, 0.5, 0, 0.3),
+              fontSize: 30, // Fuente más pequeña (antes 50)
+              color: _watermarkColor,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
@@ -63,161 +291,43 @@ class PdfGeneratorService {
     );
   }
 
-  pw.Widget _buildContent(
-    pw.Context context,
-    ListingEntity listing,
-    ListingRequestEntity request,
-    UserEntity host,
-    pw.Font fontRegular,
-    pw.Font fontBold,
-  ) {
-    final dateFormat = DateFormat('dd/MM/yyyy');
-    final approvalDate = dateFormat.format(DateTime.now());
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
+  pw.Widget _buildSignatures(UserEntity host, ListingRequestEntity request, pw.Font font) {
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
-        // Header
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text(
-              'HAUS',
-              style: pw.TextStyle(
-                font: fontBold,
-                fontSize: 24,
-                color: PdfColors.blue900,
-              ),
-            ),
-            pw.Text(
-              'CARTA DE INTENCIÓN DE ALQUILER',
-              style: pw.TextStyle(
-                font: fontBold,
-                fontSize: 16,
-                decoration: pw.TextDecoration.underline,
-              ),
-            ),
-          ],
-        ),
-        pw.SizedBox(height: 30),
-
-        // Introduction
-        pw.Text(
-          'Por medio de la presente, se certifica la intención de alquiler y aprobación de la solicitud realizada a través de la plataforma HAUS.',
-          style: pw.TextStyle(font: fontRegular, fontSize: 12),
-        ),
-        pw.SizedBox(height: 20),
-
-        // Details Grid
-        pw.Table(
-          border: pw.TableBorder.all(color: PdfColors.grey, width: 0.5),
-          children: [
-            _buildTableRow('DATOS DEL ANFITRION', '', fontBold, isHeader: true),
-            _buildTableRow('Nombre:', host.displayName, fontRegular),
-            _buildTableRow('Correo:', host.email, fontRegular),
-            _buildTableRow('DATOS DEL INQUILINO', '', fontBold, isHeader: true),
-            _buildTableRow(
-                'Nombre:', request.requesterName ?? 'N/A', fontRegular),
-            _buildTableRow('ID Solicitud:', request.id, fontRegular),
-            _buildTableRow('DATOS DEL INMUEBLE', '', fontBold, isHeader: true),
-            _buildTableRow('Dirección:', listing.address, fontRegular),
-            _buildTableRow('Ciudad/Barrio:',
-                '${listing.city}, ${listing.neighborhood}', fontRegular),
-            _buildTableRow(
-                'Tipo de Inmueble:', listing.housingType, fontRegular),
-          ],
-        ),
-        pw.SizedBox(height: 20),
-
-        // Conditions
-        pw.Text(
-          'CONDICIONES Y REGLAS',
-          style: pw.TextStyle(font: fontBold, fontSize: 14),
-        ),
-        pw.Divider(),
-        pw.Text('Precio Mensual: \$${listing.price.toStringAsFixed(2)}',
-            style: pw.TextStyle(font: fontRegular)),
-        pw.SizedBox(height: 5),
-        pw.Text('Servicios Incluidos (Amenities):',
-            style: pw.TextStyle(font: fontBold)),
-        pw.Text(listing.amenities.join(', '),
-            style: pw.TextStyle(font: fontRegular, color: PdfColors.grey700)),
-        pw.SizedBox(height: 5),
-        pw.Text('Reglas de la Casa:', style: pw.TextStyle(font: fontBold)),
-        pw.Text(listing.houseRules.join(', '),
-            style: pw.TextStyle(font: fontRegular, color: PdfColors.grey700)),
-
-        pw.Spacer(),
-
-        // Signatures
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Column(
-              children: [
-                pw.Container(width: 150, height: 1, color: PdfColors.black),
-                pw.SizedBox(height: 5),
-                pw.Text('Firma del Anfitrión',
-                    style: pw.TextStyle(font: fontRegular)),
-                pw.Text(host.displayName,
-                    style: pw.TextStyle(font: fontRegular, fontSize: 10)),
-              ],
-            ),
-            pw.Column(
-              children: [
-                pw.Container(width: 150, height: 1, color: PdfColors.black),
-                pw.SizedBox(height: 5),
-                pw.Text('Firma del Inquilino',
-                    style: pw.TextStyle(font: fontRegular)),
-                pw.Text(request.requesterName ?? 'Inquilino',
-                    style: pw.TextStyle(font: fontRegular, fontSize: 10)),
-              ],
-            ),
-          ],
-        ),
-        pw.SizedBox(height: 20),
-
-        pw.Center(
-          child: pw.Text(
-            'Fecha de emisión: $approvalDate',
-            style: pw.TextStyle(
-                font: fontRegular, fontSize: 10, color: PdfColors.grey),
-          ),
-        ),
+        _buildSignatureLine(host.displayName, 'Anfitrión', font),
+        _buildSignatureLine(request.requesterName ?? 'Inquilino', 'Solicitante', font),
       ],
     );
   }
 
-  pw.TableRow _buildTableRow(String label, String value, pw.Font font,
-      {bool isHeader = false}) {
-    return pw.TableRow(
-      decoration:
-          isHeader ? const pw.BoxDecoration(color: PdfColors.grey200) : null,
+  pw.Widget _buildSignatureLine(String name, String role, pw.Font font) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Padding(
-          padding: const pw.EdgeInsets.all(5),
-          child: pw.Text(
-            label,
-            style: pw.TextStyle(
-                font: font,
-                fontWeight:
-                    isHeader ? pw.FontWeight.bold : pw.FontWeight.normal),
-          ),
-        ),
-        if (!isHeader)
-          pw.Padding(
-            padding: const pw.EdgeInsets.all(5),
-            child: pw.Text(
-              value,
-              style: pw.TextStyle(font: font),
-            ),
-          )
-        else
-          pw.Padding(
-            padding: const pw.EdgeInsets.all(5),
-            child: pw.Text(''),
-          ),
+        pw.Container(width: 180, height: 1, color: PdfColors.black),
+        pw.SizedBox(height: 8),
+        pw.Text(name, style: pw.TextStyle(font: font, fontSize: 11, fontWeight: pw.FontWeight.bold)),
+        pw.Text(role.toUpperCase(), style: pw.TextStyle(font: font, fontSize: 8, color: _textLightColor)),
       ],
+    );
+  }
+
+  pw.Widget _buildFooter(pw.Font font) {
+    final date = DateFormat('dd MMM yyyy').format(DateTime.now());
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(top: 30),
+      padding: const pw.EdgeInsets.only(top: 10),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(top: pw.BorderSide(color: PdfColors.grey200))
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text('Generado automáticamente por HAUS App', style: pw.TextStyle(font: font, fontSize: 8, color: _textLightColor)),
+          pw.Text('Fecha de emisión: $date', style: pw.TextStyle(font: font, fontSize: 8, color: _textLightColor)),
+        ],
+      ),
     );
   }
 }
