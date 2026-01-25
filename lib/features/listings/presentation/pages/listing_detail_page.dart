@@ -69,7 +69,12 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
               MaterialPageRoute(
                 builder: (_) => ChatPage(
                   conversationId: state.conversation.id,
+                  listingId: listing.id,
                   listingTitle: listing.title,
+                  listingImageUrl: listing.imageUrls.isNotEmpty
+                      ? listing.imageUrls.first
+                      : null,
+                  listingPrice: listing.price,
                   otherUserName: state.conversation.otherUserName,
                 ),
               ),

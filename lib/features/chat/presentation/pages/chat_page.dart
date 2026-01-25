@@ -294,12 +294,13 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildEmptyChat() {
-    return Center(
+    return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 40),
             Icon(
               Icons.waving_hand_rounded,
               size: 56,
