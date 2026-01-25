@@ -113,7 +113,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
       pageBuilder: (context, anim1, anim2) => const SizedBox(),
       transitionBuilder: (context, anim1, anim2, child) {
         return Transform.scale(
-          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack).value,
+          scale:
+              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack).value,
           child: Opacity(
             opacity: anim1.value,
             child: Dialog(
@@ -515,8 +516,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
         children: [
           const Icon(Icons.wifi_off_rounded, size: 80, color: Colors.redAccent),
           const SizedBox(height: 16),
-          Text('Algo salió mal',
-              style: TextStyle(color: Colors.white, fontSize: 18)),
+          Text(_error ?? 'Algo salió mal',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 14)),
           TextButton(onPressed: _loadData, child: const Text('REINTENTAR')),
         ],
       ),
