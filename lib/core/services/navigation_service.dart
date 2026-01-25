@@ -66,6 +66,15 @@ class NavigationService {
     _notifyNavigationListeners();
   }
 
+  /// Navegar a la pestaña de conexiones
+  void navigateToConnections() {
+    _pendingNavigation = _PendingNavigation(
+      type: NavigationType.connections,
+      data: {},
+    );
+    _notifyNavigationListeners();
+  }
+
   // Sistema de listeners para navegación pendiente
   _PendingNavigation? _pendingNavigation;
   final List<VoidCallback> _navigationListeners = [];
@@ -94,7 +103,7 @@ class NavigationService {
   }
 }
 
-enum NavigationType { chat, listing }
+enum NavigationType { chat, listing, connections }
 
 class _PendingNavigation {
   final NavigationType type;
