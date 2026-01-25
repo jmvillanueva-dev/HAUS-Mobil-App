@@ -9,13 +9,35 @@ import '../widgets/conversation_tile.dart';
 import 'chat_page.dart';
 
 /// Página que muestra la lista de conversaciones del usuario
-class ChatListPage extends StatelessWidget {
+class ChatListPage extends StatefulWidget {
   const ChatListPage({super.key});
 
   @override
+  State<ChatListPage> createState() => _ChatListPageState();
+}
+
+class _ChatListPageState extends State<ChatListPage> {
+  late ChatBloc _chatBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _chatBloc = GetIt.I<ChatBloc>();
+    // Cargar conversaciones y suscribirse a cambios en tiempo real
+    _chatBloc.add(const LoadConversations());
+    _chatBloc.add(const SubscribeToConversations());
+  }
+
+  @override
+  void dispose() {
+    _chatBloc.add(const UnsubscribeFromConversations());
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => GetIt.I<ChatBloc>()..add(const LoadConversations()),
+    return BlocProvider.value(
+      value: _chatBloc,
       child: const _ChatListView(),
     );
   }
@@ -170,7 +192,9 @@ class _ChatListView extends StatelessWidget {
               MaterialPageRoute(
                 builder: (_) => ChatPage(
                   conversationId: conversation.id,
+                  listingId: conversation.listingId,
                   listingTitle: conversation.listingTitle,
+                  listingImageUrl: conversation.listingImageUrl,
                   otherUserName: conversation.otherUserName,
                 ),
               ),

@@ -1,23 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../listings/domain/entities/listing_entity.dart';
+import '../../../listings/presentation/pages/listing_detail_page.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../bloc/chat_state.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/chat_input.dart';
+import '../widgets/listing_chat_header.dart';
 
 /// Página de conversación individual
 class ChatPage extends StatefulWidget {
   final String conversationId;
+  final String? listingId;
   final String? listingTitle;
+  final String? listingImageUrl;
+  final double? listingPrice;
   final String? otherUserName;
 
   const ChatPage({
     super.key,
     required this.conversationId,
+    this.listingId,
     this.listingTitle,
+    this.listingImageUrl,
+    this.listingPrice,
     this.otherUserName,
   });
 
@@ -46,23 +56,64 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      });
-    }
-  }
+  // Con reverse: true en el ListView, el scroll automáticamente
+  // muestra los mensajes más recientes sin necesidad de scrollToBottom
 
   void _handleSendMessage(String content) {
     _chatBloc.add(SendMessage(
       conversationId: widget.conversationId,
       content: content,
     ));
+  }
+
+  /// Navegar al detalle del listing
+  Future<void> _navigateToListingDetail() async {
+    if (widget.listingId == null) return;
+
+    try {
+      // Obtener el listing desde Supabase
+      final supabase = GetIt.I<SupabaseClient>();
+      final response = await supabase
+          .from('listings')
+          .select()
+          .eq('id', widget.listingId!)
+          .maybeSingle();
+
+      if (response != null && mounted) {
+        final listing = ListingEntity(
+          id: response['id'] as String,
+          userId: response['user_id'] as String? ?? '',
+          title: response['title'] as String,
+          description: response['description'] as String? ?? '',
+          price: (response['price'] as num).toDouble(),
+          housingType: response['housing_type'] as String? ?? '',
+          city: response['city'] as String? ?? '',
+          neighborhood: response['neighborhood'] as String? ?? '',
+          address: response['address'] as String? ?? '',
+          latitude: response['latitude'] != null
+              ? (response['latitude'] as num).toDouble()
+              : null,
+          longitude: response['longitude'] != null
+              ? (response['longitude'] as num).toDouble()
+              : null,
+          amenities: List<String>.from(response['amenities'] ?? []),
+          houseRules: List<String>.from(response['house_rules'] ?? []),
+          imageUrls: List<String>.from(response['image_urls'] ?? []),
+          createdAt: response['created_at'] != null
+              ? DateTime.parse(response['created_at'] as String)
+              : null,
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ListingDetailPage(listing: listing),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error navigating to listing: $e');
+    }
   }
 
   @override
@@ -74,6 +125,16 @@ class _ChatPageState extends State<ChatPage> {
         appBar: _buildAppBar(),
         body: Column(
           children: [
+            // Card del listing (si hay datos)
+            ListingChatHeader(
+              listingTitle: widget.listingTitle,
+              listingImageUrl: widget.listingImageUrl,
+              listingPrice: widget.listingPrice,
+              onTap: widget.listingId != null
+                  ? () => _navigateToListingDetail()
+                  : null,
+            ),
+
             // Lista de mensajes
             Expanded(
               child: _buildMessagesList(),
@@ -140,10 +201,8 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMessagesList() {
     return BlocConsumer<ChatBloc, ChatState>(
       listener: (context, state) {
-        // Scroll al fondo cuando llegan nuevos mensajes
-        if (state is MessagesLoaded || state is MessageSent) {
-          _scrollToBottom();
-        }
+        // Con reverse: true, no necesitamos hacer scroll manual
+        // Los mensajes nuevos aparecen automáticamente al final
 
         // Mostrar error de envío
         if (state is MessageSendError) {
@@ -197,14 +256,20 @@ class _ChatPageState extends State<ChatPage> {
           return _buildEmptyChat();
         }
 
+        // Usando reverse: true para que los mensajes nuevos aparezcan abajo
+        // y el scroll automáticamente muestre el último mensaje
         return ListView.builder(
           controller: _scrollController,
+          reverse: true,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           itemCount: messages.length,
           itemBuilder: (context, index) {
+            // Invertir índice porque la lista está en reverse
+            final reversedIndex = messages.length - 1 - index;
             return MessageBubble(
-              message: messages[index],
+              message: messages[reversedIndex],
               showTime: true,
+              otherUserName: widget.otherUserName,
             );
           },
         );
@@ -217,6 +282,9 @@ class _ChatPageState extends State<ChatPage> {
       return state.messages;
     }
     if (state is MessageSending) {
+      return state.currentMessages;
+    }
+    if (state is MessageSent) {
       return state.currentMessages;
     }
     if (state is MessageSendError) {
