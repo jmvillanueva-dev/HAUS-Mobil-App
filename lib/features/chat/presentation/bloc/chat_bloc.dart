@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/message_entity.dart';
 import '../../domain/repositories/chat_repository.dart';
 import 'chat_event.dart';
@@ -11,12 +12,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final ChatRepository _chatRepository;
 
   StreamSubscription<List<MessageEntity>>? _messagesSubscription;
+  RealtimeChannel? _conversationsChannel;
   List<MessageEntity> _currentMessages = [];
 
   ChatBloc({required ChatRepository chatRepository})
       : _chatRepository = chatRepository,
         super(const ChatInitial()) {
     on<LoadConversations>(_onLoadConversations);
+    on<SubscribeToConversations>(_onSubscribeToConversations);
+    on<UnsubscribeFromConversations>(_onUnsubscribeFromConversations);
+    on<ConversationsUpdated>(_onConversationsUpdated);
     on<LoadMessages>(_onLoadMessages);
     on<SubscribeToMessages>(_onSubscribeToMessages);
     on<UnsubscribeFromMessages>(_onUnsubscribeFromMessages);
@@ -43,6 +48,79 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       },
       (conversations) {
         developer.log('Loaded ${conversations.length} conversations',
+            name: 'ChatBloc');
+        emit(ConversationsLoaded(conversations));
+      },
+    );
+  }
+
+  /// Suscribirse a cambios en conversaciones (nuevas conversaciones, mensajes)
+  Future<void> _onSubscribeToConversations(
+    SubscribeToConversations event,
+    Emitter<ChatState> emit,
+  ) async {
+    // Cancelar suscripción anterior
+    await _conversationsChannel?.unsubscribe();
+
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    developer.log('Subscribing to conversations realtime', name: 'ChatBloc');
+
+    // Escuchar cambios en la tabla conversations
+    _conversationsChannel = Supabase.instance.client
+        .channel('user_conversations')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'conversations',
+          callback: (payload) {
+            developer.log('Conversations table changed: ${payload.eventType}',
+                name: 'ChatBloc');
+            // Verificar si el cambio me involucra
+            final data = payload.newRecord;
+            if (data.isNotEmpty) {
+              final conversationUserId = data['user_id'] as String?;
+              final hostId = data['host_id'] as String?;
+              if (conversationUserId == userId || hostId == userId) {
+                add(const ConversationsUpdated());
+              }
+            } else {
+              // Para deletes u otros cambios, simplemente refrescar
+              add(const ConversationsUpdated());
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  /// Cancelar suscripción a conversaciones
+  Future<void> _onUnsubscribeFromConversations(
+    UnsubscribeFromConversations event,
+    Emitter<ChatState> emit,
+  ) async {
+    developer.log('Unsubscribing from conversations', name: 'ChatBloc');
+    await _conversationsChannel?.unsubscribe();
+    _conversationsChannel = null;
+  }
+
+  /// Conversaciones actualizadas - recargar lista
+  Future<void> _onConversationsUpdated(
+    ConversationsUpdated event,
+    Emitter<ChatState> emit,
+  ) async {
+    developer.log('Reloading conversations due to realtime update',
+        name: 'ChatBloc');
+    // Recargar conversaciones
+    final result = await _chatRepository.getConversations();
+
+    result.fold(
+      (failure) {
+        developer.log('Error reloading conversations: ${failure.message}',
+            name: 'ChatBloc');
+      },
+      (conversations) {
+        developer.log('Reloaded ${conversations.length} conversations',
             name: 'ChatBloc');
         emit(ConversationsLoaded(conversations));
       },
@@ -144,7 +222,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       (message) {
         developer.log('Message sent: ${message.id}', name: 'ChatBloc');
         // El mensaje llegará por Realtime, pero emitimos para feedback inmediato
-        emit(MessageSent(message));
+        // Incluimos currentMessages para evitar parpadeo
+        emit(MessageSent(message, _currentMessages));
         // Nota: No actualizamos _currentMessages aquí porque
         // llegará automáticamente por el stream de Realtime
       },
@@ -188,6 +267,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   @override
   Future<void> close() {
     _messagesSubscription?.cancel();
+    _conversationsChannel?.unsubscribe();
     return super.close();
   }
 }

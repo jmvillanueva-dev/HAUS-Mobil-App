@@ -88,11 +88,12 @@ class MessageSending extends ChatState {
 /// Mensaje enviado exitosamente
 class MessageSent extends ChatState {
   final MessageEntity message;
+  final List<MessageEntity> currentMessages;
 
-  const MessageSent(this.message);
+  const MessageSent(this.message, this.currentMessages);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, currentMessages];
 }
 
 /// Error al enviar mensaje

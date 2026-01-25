@@ -13,6 +13,21 @@ class LoadConversations extends ChatEvent {
   const LoadConversations();
 }
 
+/// Suscribirse a conversaciones en tiempo real
+class SubscribeToConversations extends ChatEvent {
+  const SubscribeToConversations();
+}
+
+/// Cancelar suscripción a conversaciones
+class UnsubscribeFromConversations extends ChatEvent {
+  const UnsubscribeFromConversations();
+}
+
+/// Conversaciones actualizadas (desde Realtime)
+class ConversationsUpdated extends ChatEvent {
+  const ConversationsUpdated();
+}
+
 /// Cargar mensajes de una conversación específica
 class LoadMessages extends ChatEvent {
   final String conversationId;
