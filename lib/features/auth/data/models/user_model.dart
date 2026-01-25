@@ -18,6 +18,7 @@ class UserModel extends UserEntity {
     super.verificationDocUrl,
     super.isRoleSelected,
     super.onboardingCompleted,
+    super.hasCompletedPreferences,
     super.createdAt,
     super.updatedAt,
   });
@@ -53,6 +54,7 @@ class UserModel extends UserEntity {
       isRoleSelected:
           metadata.containsKey('role') || metadata.containsKey('role_selected'),
       onboardingCompleted: false, // Desde auth no tenemos este dato
+      hasCompletedPreferences: false,
       createdAt: DateTime.tryParse(user.createdAt),
     );
   }
@@ -78,6 +80,8 @@ class UserModel extends UserEntity {
       // pero idealmente siempre deberíamos tener el usuario de auth.
       isRoleSelected: true,
       onboardingCompleted: json['onboarding_completed'] as bool? ?? false,
+      hasCompletedPreferences:
+          json['has_completed_preferences'] as bool? ?? false,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
@@ -112,6 +116,8 @@ class UserModel extends UserEntity {
       isRoleSelected:
           metadata.containsKey('role') || metadata.containsKey('role_selected'),
       onboardingCompleted: profile['onboarding_completed'] as bool? ?? false,
+      hasCompletedPreferences:
+          profile['has_completed_preferences'] as bool? ?? false,
       createdAt: DateTime.tryParse(authUser.createdAt),
       updatedAt: profile['updated_at'] != null
           ? DateTime.tryParse(profile['updated_at'] as String)
@@ -131,6 +137,7 @@ class UserModel extends UserEntity {
       'role': role.toDbString(),
       'university_or_company': universityOrCompany,
       'onboarding_completed': onboardingCompleted,
+      'has_completed_preferences': hasCompletedPreferences,
       // status y verification_doc_url no se actualizan desde el cliente
     };
   }
@@ -149,6 +156,9 @@ class UserModel extends UserEntity {
     // Siempre incluir onboarding_completed cuando es true
     if (onboardingCompleted) {
       map['onboarding_completed'] = true;
+    }
+    if (hasCompletedPreferences) {
+      map['has_completed_preferences'] = true;
     }
     return map;
   }
@@ -169,6 +179,7 @@ class UserModel extends UserEntity {
       verificationDocUrl: verificationDocUrl,
       isRoleSelected: isRoleSelected,
       onboardingCompleted: onboardingCompleted,
+      hasCompletedPreferences: hasCompletedPreferences,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -190,6 +201,7 @@ class UserModel extends UserEntity {
       verificationDocUrl: entity.verificationDocUrl,
       isRoleSelected: entity.isRoleSelected,
       onboardingCompleted: entity.onboardingCompleted,
+      hasCompletedPreferences: entity.hasCompletedPreferences,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );
