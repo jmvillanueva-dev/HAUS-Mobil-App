@@ -12,6 +12,15 @@ class NotificationService {
 
   bool _initialized = false;
 
+  // Cache de IDs de mensajes ya notificados para evitar duplicados
+  final Set<String> _notifiedMessageIds = {};
+
+  // Control para saber si la app está en foreground
+  bool _isAppInForeground = true;
+
+  // ID del chat actualmente abierto (para no notificar mensajes de ese chat)
+  String? _currentOpenChatId;
+
   /// Inicializa el servicio de notificaciones
   Future<void> initialize() async {
     if (_initialized) return;
@@ -71,7 +80,96 @@ class NotificationService {
   /// Maneja el tap en una notificación
   void _onNotificationTapped(NotificationResponse response) {
     debugPrint('Notification tapped: ${response.payload}');
-    // TODO: Navegar a la página de solicitudes cuando se implemente navegación global
+    // TODO: Navegar a la página correspondiente cuando se implemente navegación global
+  }
+
+  /// Establecer si la app está en foreground
+  void setAppInForeground(bool inForeground) {
+    _isAppInForeground = inForeground;
+    debugPrint('App in foreground: $inForeground');
+  }
+
+  /// Establecer el chat actualmente abierto
+  void setCurrentOpenChat(String? conversationId) {
+    _currentOpenChatId = conversationId;
+    debugPrint('Current open chat: $conversationId');
+  }
+
+  /// Mostrar notificación de nuevo mensaje de chat
+  /// Retorna true si la notificación fue mostrada, false si fue omitida
+  Future<bool> showChatNotification({
+    required String messageId,
+    required String conversationId,
+    required String senderName,
+    required String messageContent,
+  }) async {
+    // Evitar notificar si ya se notificó este mensaje
+    if (_notifiedMessageIds.contains(messageId)) {
+      debugPrint('Message $messageId already notified, skipping');
+      return false;
+    }
+
+    // Evitar notificar si la app está en foreground y este chat está abierto
+    if (_isAppInForeground && _currentOpenChatId == conversationId) {
+      debugPrint('Chat $conversationId is open, skipping notification');
+      return false;
+    }
+
+    // Marcar como notificado
+    _notifiedMessageIds.add(messageId);
+
+    // Limitar el tamaño del cache (máximo 500 IDs)
+    if (_notifiedMessageIds.length > 500) {
+      final toRemove = _notifiedMessageIds.take(100).toList();
+      _notifiedMessageIds.removeAll(toRemove);
+    }
+
+    const androidDetails = AndroidNotificationDetails(
+      'chat_messages',
+      'Mensajes',
+      channelDescription: 'Notificaciones de nuevos mensajes de chat',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // Generar ID numérico único para la notificación
+    final notificationId = messageId.hashCode;
+
+    try {
+      await _notifications.show(
+        notificationId,
+        '💬 $senderName',
+        messageContent,
+        details,
+        payload: 'chat:$conversationId',
+      );
+
+      debugPrint('Notification shown for message $messageId from $senderName');
+      return true;
+    } catch (e) {
+      debugPrint('Error showing chat notification: $e');
+      return false;
+    }
+  }
+
+  /// Limpiar el cache de IDs de mensajes notificados
+  void clearNotifiedCache() {
+    _notifiedMessageIds.clear();
   }
 
   /// Muestra una notificación de nueva solicitud (para refugios)
