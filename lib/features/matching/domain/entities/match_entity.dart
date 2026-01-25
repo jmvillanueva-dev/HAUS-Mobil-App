@@ -201,18 +201,18 @@ class MatchCandidate extends Equatable {
   List<String> getCharacteristicChips() {
     final chips = <String>[];
 
-    if (exercises == true) chips.add('🏃 Ejercicio');
-    if (playsVideogames == true) chips.add('🎮 Gamer');
-    if (playsMusic == true) chips.add('🎵 Música');
-    if (worksFromHome == true) chips.add('💻 Remoto');
-    if (likesParties == true) chips.add('🎉 Fiestas');
-    if (hasPets == true) chips.add('🐾 Mascotas');
+    if (exercises == true) chips.add('Ejercicio');
+    if (playsVideogames == true) chips.add('Gamer');
+    if (playsMusic == true) chips.add('Música');
+    if (worksFromHome == true) chips.add('Remoto');
+    if (likesParties == true) chips.add('Fiestas');
+    if (hasPets == true) chips.add('Mascotas');
 
-    if (sleepSchedule == 'early_bird') chips.add('🌅 Madrugador');
-    if (sleepSchedule == 'night_owl') chips.add('🦉 Nocturno');
+    if (sleepSchedule == 'early_bird') chips.add('Madrugador');
+    if (sleepSchedule == 'night_owl') chips.add('Nocturno');
 
-    if (noiseLevel == 'quiet') chips.add('🤫 Tranquilo');
-    if (noiseLevel == 'social') chips.add('🗣️ Social');
+    if (noiseLevel == 'quiet') chips.add('Tranquilo');
+    if (noiseLevel == 'social') chips.add('Social');
 
     return chips.take(5).toList(); // Máximo 5 chips
   }

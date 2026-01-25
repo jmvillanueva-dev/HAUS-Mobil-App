@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/match_entity.dart';
@@ -19,12 +20,11 @@ class ProfileCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
-          color: AppTheme.surfaceDark,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 25,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
@@ -33,128 +33,81 @@ class ProfileCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Imagen de fondo
+              // 1. Imagen de fondo
               _buildProfileImage(),
 
-              // Gradiente inferior para legibilidad
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 300,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.4),
-                        Colors.black.withOpacity(0.8),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Badge de Distancia (Top Left)
-              Positioned(
-                top: 20,
-                left: 20,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      const Text(
-                        '500 m',
-                        style: TextStyle(
-                          color: AppTheme.backgroundDark,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.location_on_rounded,
-                          color: AppTheme.primaryColor, size: 14),
+              // 2. Gradiente optimizado para legibilidad
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0.0, 0.4, 0.7, 1.0],
+                    colors: [
+                      Colors.black26,
+                      Colors.transparent,
+                      Colors.black45,
+                      Colors.black87,
                     ],
                   ),
                 ),
               ),
 
-              // Iconos flotantes (Top Right)
+              // 3. Badge de Compatibilidad (Top Right)
               Positioned(
                 top: 20,
                 right: 20,
-                child: Column(
-                  children: [
-                    _buildFloatingIcon(
-                        Icons.favorite_rounded, Colors.redAccent),
-                    const SizedBox(height: 8),
-                    _buildFloatingIcon(
-                        Icons.videogame_asset_rounded, Colors.orangeAccent),
-                    const SizedBox(height: 8),
-                    _buildFloatingIcon(
-                        Icons.music_note_rounded, Colors.blueAccent),
-                    const SizedBox(height: 8),
-                    _buildFloatingIcon(
-                        Icons.pets_rounded, AppTheme.secondaryColor),
-                  ],
+                child: _buildGlassBadge(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.flash_on_rounded,
+                          color: Color.fromARGB(255, 6, 6, 6), size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${candidate.compatibilityScore > 1 ? candidate.compatibilityScore.toInt() : (candidate.compatibilityScore * 100).toInt()}%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
-              // Información del perfil (Bottom)
+              // 4. Información del perfil (Bottom)
               Positioned(
-                bottom: 30,
-                left: 24,
-                right: 24,
+                bottom: 24,
+                left: 20,
+                right: 20,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Badge pequeño arriba del nombre
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.3)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Hate to chat',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.chat_bubble_rounded,
-                              color: Colors.white.withOpacity(0.8), size: 12),
-                        ],
-                      ),
+                    // Chips de intereses / Atributos reales
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: candidate
+                          .getCharacteristicChips()
+                          .map((chip) => _buildInterestChip(chip))
+                          .toList(),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
-                    // Nombre y Verified Badge
+                    // Nombre y Verificación
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
+                        Flexible(
                           child: Text(
                             candidate.displayName,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
                               letterSpacing: -0.5,
                             ),
                             maxLines: 1,
@@ -162,26 +115,35 @@ class ProfileCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.check_rounded,
-                              color: Colors.white, size: 16),
-                        ),
+                        const Icon(Icons.verified_rounded,
+                            color: Colors.blueAccent, size: 24),
                       ],
                     ),
 
-                    // Rol / Ocupación
-                    Text(
-                      candidate.role == 'student' ? 'Estudiante' : 'Trabajador',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const SizedBox(height: 4),
+
+                    // Profesión / Rol real
+                    Row(
+                      children: [
+                        Icon(
+                          candidate.role == 'student'
+                              ? Icons.school_outlined
+                              : Icons.work_outline,
+                          color: Colors.white70,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          candidate.role == 'student'
+                              ? 'Estudiante'
+                              : 'Profesional',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -193,51 +155,58 @@ class ProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFloatingIcon(IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+  // Componente de Cristal (Blur effect)
+  Widget _buildGlassBadge({required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          child: child,
+        ),
       ),
-      child: Icon(icon, color: color, size: 18),
+    );
+  }
+
+  // Componente de Tag / Interés
+  Widget _buildInterestChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+            color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+      ),
     );
   }
 
   Widget _buildProfileImage() {
-    if (candidate.avatarUrl != null && candidate.avatarUrl!.isNotEmpty) {
-      return Image.network(
-        candidate.avatarUrl!,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
-                      loadingProgress.expectedTotalBytes!
-                  : null,
-              color: AppTheme.primaryColor,
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-      );
-    }
-    return _buildPlaceholder();
-  }
-
-  Widget _buildPlaceholder() {
-    return Container(
-      color: AppTheme.surfaceDarkElevated,
-      child: Center(
-        child: Icon(
-          Icons.person_rounded,
-          size: 80,
-          color: AppTheme.textSecondaryDark.withOpacity(0.5),
-        ),
+    return Image.network(
+      candidate.avatarUrl ?? '',
+      fit: BoxFit.cover,
+      alignment: const Alignment(0, -0.2),
+      errorBuilder: (context, error, stackTrace) => Container(
+        color: AppTheme.surfaceDarkElevated,
+        child:
+            const Icon(Icons.person_rounded, size: 80, color: Colors.white24),
       ),
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: AppTheme.surfaceDark,
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        );
+      },
     );
   }
 }
