@@ -88,12 +88,13 @@ class ListingChatHeader extends StatelessWidget {
               ),
             ),
 
-            // Icono de navegación
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppTheme.textSecondaryDark,
-              size: 24,
-            ),
+            // Icono de navegación (solo si es navegable)
+            if (onTap != null)
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppTheme.textSecondaryDark,
+                size: 24,
+              ),
           ],
         ),
       ),
