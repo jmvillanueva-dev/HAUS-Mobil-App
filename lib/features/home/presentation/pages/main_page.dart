@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -9,6 +10,7 @@ import '../../../explore/presentation/pages/explore_tab.dart';
 import '../../../listings/presentation/pages/publish_tab.dart';
 import '../../../connections/presentation/pages/connections_tab.dart';
 import '../../../profile/presentation/pages/profile_tab.dart';
+import '../../../matching/presentation/pages/discover_page.dart';
 import 'home_tab.dart';
 
 /// Página principal con navegación por tabs estilo "Floating Pill"
@@ -178,37 +180,217 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget _buildCenterNavItem() {
-    final isSelected = _currentIndex == 2;
-    // Reduje ligeramente el tamaño (de 56 a 50) para que encaje mejor en la barra de 70px
+  void _showCreateOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceDark.withOpacity(0.85),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 40,
+                offset: const Offset(0, -10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 48,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 32),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(2.5),
+                ),
+              ),
+
+              // Title with icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    '¿Qué deseas hacer?',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // Opción 1: Publicar Propiedad (Turquesa)
+              _buildOptionTile(
+                icon: Icons.add_home_rounded,
+                title: 'Publicar Propiedad',
+                subtitle: 'Ofrece una habitación o departamento',
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.primaryColor.withOpacity(0.6),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _currentIndex = 2);
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // Opción 2: Descubrir Roomies (Verde)
+              _buildOptionTile(
+                icon: Icons.people_rounded,
+                title: 'Descubrir Roomies',
+                subtitle: 'Encuentra personas compatibles contigo',
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.secondaryColor,
+                    AppTheme.secondaryColor.withOpacity(0.6),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DiscoverPage(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Gradient gradient,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = 2),
+      onTap: onTap,
       child: Container(
-        width: 50,
-        height: 50,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+        ),
+        child: Row(
+          children: [
+            // Icon with gradient background
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: (gradient as LinearGradient)
+                        .colors
+                        .first
+                        .withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: Colors.white, size: 28),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.5),
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 24,
+              color: Colors.white.withOpacity(0.2),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterNavItem() {
+    return GestureDetector(
+      onTap: () => _showCreateOptions(context),
+      child: Container(
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isSelected
-                ? [AppTheme.primaryColor, AppTheme.primaryDark]
-                : [
-                    AppTheme.primaryColor.withOpacity(0.9),
-                    AppTheme.primaryDark.withOpacity(0.9)
-                  ],
+            colors: [
+              AppTheme.primaryColor,
+              AppTheme.primaryDark,
+            ],
           ),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primaryColor.withOpacity(0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: AppTheme.primaryColor.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
             ),
           ],
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1.5,
+          ),
         ),
-        child: Icon(
+        child: const Icon(
           Icons.add_rounded,
-          size: 28,
+          size: 32,
           color: AppTheme.backgroundDark,
         ),
       ),
