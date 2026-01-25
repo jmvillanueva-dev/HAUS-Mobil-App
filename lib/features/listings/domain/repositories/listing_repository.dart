@@ -8,5 +8,9 @@ abstract class ListingRepository {
       ListingEntity listing, List<File> images);
   Future<Either<Failure, List<ListingEntity>>> getListings();
   Stream<Either<Failure, List<ListingEntity>>> getListingsStream();
+  Stream<Either<Failure, List<ListingEntity>>> getMyListingsStream(
+      String userId);
+  Future<Either<Failure, ListingEntity>> updateListing(
+      ListingEntity listing, List<File>? newImages);
   Future<Either<Failure, void>> deleteListing(String listingId);
 }

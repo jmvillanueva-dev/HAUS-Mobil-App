@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/loading_overlay.dart';
 import '../../../../core/data/ecuador_locations.dart';
 import '../../domain/entities/listing_entity.dart';
 import '../bloc/listing_bloc.dart';
@@ -15,8 +14,10 @@ import 'location_picker_page.dart';
 
 class CreateListingPage extends StatefulWidget {
   final String userId;
+  final ListingEntity? listingToEdit;
 
-  const CreateListingPage({super.key, required this.userId});
+  const CreateListingPage(
+      {super.key, required this.userId, this.listingToEdit});
 
   @override
   State<CreateListingPage> createState() => _CreateListingPageState();
@@ -74,6 +75,9 @@ class _CreateListingPageState extends State<CreateListingPage> {
   ];
   final List<String> _selectedAmenities = [];
 
+  // Lista local para gestionar las imágenes que ya existían (y poder borrarlas)
+  List<String> _existingImageUrls = [];
+
   final List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
 
@@ -83,6 +87,26 @@ class _CreateListingPageState extends State<CreateListingPage> {
       setState(() {
         _selectedImages.addAll(images.map((x) => File(x.path)));
       });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.listingToEdit != null) {
+      final listing = widget.listingToEdit!;
+      _titleController.text = listing.title;
+      _descriptionController.text = listing.description;
+      _priceController.text =
+          listing.price.toStringAsFixed(0); // Assuming integer price for input
+      _addressController.text = listing.address;
+      _selectedHousingType = listing.housingType;
+      _selectedCity = listing.city;
+      _selectedNeighborhood = listing.neighborhood;
+      _selectedLocation = LatLng(listing.latitude ?? 0, listing.longitude ?? 0);
+      _selectedAmenities.addAll(listing.amenities);
+      _selectedHouseRules.addAll(listing.houseRules);
+      _existingImageUrls = List.from(listing.imageUrls);
     }
   }
 
@@ -104,7 +128,8 @@ class _CreateListingPageState extends State<CreateListingPage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      if (_selectedImages.isEmpty) {
+      // Validar que haya al menos una imagen (ya sea nueva o existente)
+      if (_selectedImages.isEmpty && _existingImageUrls.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Debes agregar al menos una imagen')),
         );
@@ -136,7 +161,8 @@ class _CreateListingPageState extends State<CreateListingPage> {
       }
 
       final listing = ListingEntity(
-        userId: widget.userId, // ID del usuario actual
+        id: widget.listingToEdit?.id, // ID si estamos editando
+        userId: widget.userId,
         title: _titleController.text,
         description: _descriptionController.text,
         price: double.parse(_priceController.text),
@@ -144,16 +170,23 @@ class _CreateListingPageState extends State<CreateListingPage> {
         city: _selectedCity!,
         neighborhood: _selectedNeighborhood!,
         address: _addressController.text,
-        latitude: _selectedLocation!.latitude, // Enviamos latitud
-        longitude: _selectedLocation!.longitude, // Enviamos longitud
-        amenities: _selectedAmenities, // Enviamos amenities
+        latitude: _selectedLocation!.latitude,
+        longitude: _selectedLocation!.longitude,
+        amenities: _selectedAmenities,
         houseRules: _selectedHouseRules,
-        imageUrls: const [], // Se llenará en el servidor
+        imageUrls:
+            _existingImageUrls, // Enviamos las imágenes que el usuario decidió conservar
       );
 
-      context.read<ListingBloc>().add(
-            CreateListingEvent(listing: listing, images: _selectedImages),
-          );
+      if (widget.listingToEdit == null) {
+        context.read<ListingBloc>().add(
+              CreateListingEvent(listing: listing, images: _selectedImages),
+            );
+      } else {
+        context.read<ListingBloc>().add(
+              UpdateListingEvent(listing: listing, newImages: _selectedImages),
+            );
+      }
     }
   }
 
@@ -176,7 +209,9 @@ class _CreateListingPageState extends State<CreateListingPage> {
       child: Scaffold(
         backgroundColor: AppTheme.backgroundDark,
         appBar: AppBar(
-          title: const Text('Nueva Publicación'),
+          title: Text(widget.listingToEdit == null
+              ? 'Nueva Publicación'
+              : 'Editar Publicación'),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
@@ -233,6 +268,56 @@ class _CreateListingPageState extends State<CreateListingPage> {
                                   ),
                           ),
                         ),
+                        if (_existingImageUrls.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          const Text('Imágenes actuales:',
+                              style: TextStyle(color: Colors.white70)),
+                          SizedBox(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _existingImageUrls.length,
+                              itemBuilder: (context, index) {
+                                return Stack(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          right: 8.0, top: 8.0),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                            _existingImageUrls[index],
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _existingImageUrls.removeAt(index);
+                                          });
+                                        },
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          padding: const EdgeInsets.all(4),
+                                          child: const Icon(Icons.close,
+                                              size: 16, color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 20),
 
                         // Inputs
@@ -444,8 +529,11 @@ class _CreateListingPageState extends State<CreateListingPage> {
                             child: state is ListingLoading
                                 ? const CircularProgressIndicator(
                                     color: Colors.white)
-                                : const Text('Publicar',
-                                    style: TextStyle(
+                                : Text(
+                                    widget.listingToEdit == null
+                                        ? 'Publicar'
+                                        : 'Actualizar',
+                                    style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold)),
                           ),

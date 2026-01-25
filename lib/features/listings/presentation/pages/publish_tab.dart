@@ -6,6 +6,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart'; // Para verificar estados del usuario
 import '../bloc/listing_bloc.dart';
 import 'create_listing_page.dart';
+import 'my_listings_page.dart';
 
 /// Tab de Publicar - Crear publicación de habitación
 class PublishTab extends StatelessWidget {
@@ -147,6 +148,41 @@ class PublishTab extends StatelessWidget {
               ),
             ),
 
+            const SizedBox(height: 32),
+
+            // Edit button (My Listings)
+            Container(
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.primaryColor),
+                color: AppTheme.surfaceDark,
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  _navigateToMyListings(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(
+                  Icons.edit_note_rounded,
+                  color: AppTheme.primaryColor,
+                ),
+                label: const Text(
+                  'Mis publicaciones',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 80),
           ],
         ),
@@ -178,13 +214,41 @@ class PublishTab extends StatelessWidget {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: No se pudo identificar al usuario actual.'),
-          backgroundColor: Colors.red,
+      _showAuthError(context);
+    }
+  }
+
+  void _navigateToMyListings(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    String? userId;
+
+    if (authState is AuthAuthenticated) {
+      userId = authState.user.id;
+    } else if (authState is ProfileUpdated) {
+      userId = authState.user.id;
+    }
+
+    if (userId != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MyListingsPage(
+              userId:
+                  userId!), // MyListingsPage injects its own bloc via sl() inside
         ),
       );
+    } else {
+      _showAuthError(context);
     }
+  }
+
+  void _showAuthError(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error: No se pudo identificar al usuario actual.'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   Widget _buildFeature(IconData icon, String label) {

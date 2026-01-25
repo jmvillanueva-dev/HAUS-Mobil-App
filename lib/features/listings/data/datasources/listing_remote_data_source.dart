@@ -9,6 +9,9 @@ abstract class ListingRemoteDataSource {
   Future<ListingModel> uploadListing(ListingEntity listing, List<File> images);
   Future<List<ListingModel>> fetchListings();
   Stream<List<ListingModel>> getListingsStream();
+  Stream<List<ListingModel>> getMyListingsStream(String userId);
+  Future<ListingModel> updateListing(
+      ListingEntity listing, List<File>? newImages);
   Future<void> deleteListing(String id);
 }
 
@@ -83,6 +86,71 @@ class ListingRemoteDataSourceImpl implements ListingRemoteDataSource {
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
         .map((data) => data.map((e) => ListingModel.fromJson(e)).toList());
+  }
+
+  @override
+  Stream<List<ListingModel>> getMyListingsStream(String userId) {
+    return supabaseClient
+        .from('listings')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .order('created_at', ascending: false)
+        .map((data) => data.map((e) => ListingModel.fromJson(e)).toList());
+  }
+
+  @override
+  Future<ListingModel> updateListing(
+      ListingEntity listing, List<File>? newImages) async {
+    try {
+      List<String> imageUrls = List.from(listing.imageUrls);
+
+      // 1. Subir nuevas imágenes si existen
+      if (newImages != null && newImages.isNotEmpty) {
+        for (var image in newImages) {
+          final fileName =
+              '${DateTime.now().millisecondsSinceEpoch}_${image.path.split('/').last}';
+          final path = 'listings/${listing.userId}/$fileName';
+
+          await supabaseClient.storage.from('listings').upload(path, image);
+          final imageUrl =
+              supabaseClient.storage.from('listings').getPublicUrl(path);
+          imageUrls.add(imageUrl);
+        }
+      }
+
+      // 2. Actualizar datos
+      final listingData = ListingModel(
+        id: listing.id,
+        userId: listing.userId,
+        title: listing.title,
+        description: listing.description,
+        price: listing.price,
+        housingType: listing.housingType,
+        city: listing.city,
+        neighborhood: listing.neighborhood,
+        address: listing.address,
+        latitude: listing.latitude,
+        longitude: listing.longitude,
+        amenities: listing.amenities,
+        houseRules: listing.houseRules,
+        imageUrls: imageUrls,
+        createdAt: listing.createdAt,
+      ).toJson();
+
+      // Eliminar campos que no se deben actualizar o manejar nulos si es necesario.
+      // Supabase ignora ID si es PK en update usualmente, pero mejor asegurarse.
+
+      final response = await supabaseClient
+          .from('listings')
+          .update(listingData)
+          .eq('id', listing.id!)
+          .select()
+          .single();
+
+      return ListingModel.fromJson(response);
+    } catch (e) {
+      throw ServerFailure(e.toString());
+    }
   }
 
   @override

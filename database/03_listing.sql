@@ -16,7 +16,11 @@ create table public.listings (
   house_rules text[] default '{}',
   image_urls text[] default '{}',
   is_active boolean default true
+  is_active boolean default true
 );
+
+-- Habilitar Realtime
+alter publication supabase_realtime add table listings;
 
 -- 2. Habilitar RLS (Seguridad)
 alter table public.listings enable row level security;
@@ -25,6 +29,10 @@ alter table public.listings enable row level security;
 -- Cualquiera puede ver listings activos
 create policy "Public listings are viewable by everyone" 
 on public.listings for select using (is_active = true);
+
+-- El usuario puede ver sus propios listings (activos o inactivos)
+create policy "Users can view their own listings" 
+on public.listings for select using (auth.uid() = user_id);
 
 -- Solo el dueño puede insertar
 create policy "Users can insert their own listings" 

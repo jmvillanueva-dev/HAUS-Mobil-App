@@ -44,6 +44,28 @@ class ListingRepositoryImpl implements ListingRepository {
   }
 
   @override
+  Stream<Either<Failure, List<ListingEntity>>> getMyListingsStream(
+      String userId) {
+    return remoteDataSource.getMyListingsStream(userId).map((models) {
+      return Right<Failure, List<ListingEntity>>(models);
+    }).handleError((error) {
+      return Left<Failure, List<ListingEntity>>(
+          ServerFailure(error.toString()));
+    });
+  }
+
+  @override
+  Future<Either<Failure, ListingEntity>> updateListing(
+      ListingEntity listing, List<File>? newImages) async {
+    try {
+      final result = await remoteDataSource.updateListing(listing, newImages);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteListing(String listingId) async {
     try {
       await remoteDataSource.deleteListing(listingId);

@@ -6,10 +6,18 @@ abstract class ListingEvent extends Equatable {
   const ListingEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class LoadListingsEvent extends ListingEvent {}
+
+class LoadMyListingsEvent extends ListingEvent {
+  final String userId;
+  const LoadMyListingsEvent({required this.userId});
+
+  @override
+  List<Object> get props => [userId];
+}
 
 class CreateListingEvent extends ListingEvent {
   final ListingEntity listing;
@@ -28,4 +36,14 @@ class DeleteListingEvent extends ListingEvent {
 
   @override
   List<Object> get props => [listingId];
+}
+
+class UpdateListingEvent extends ListingEvent {
+  final ListingEntity listing;
+  final List<File>? newImages;
+
+  const UpdateListingEvent({required this.listing, this.newImages});
+
+  @override
+  List<Object?> get props => [listing, newImages];
 }
