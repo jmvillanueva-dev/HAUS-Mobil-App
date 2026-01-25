@@ -5,6 +5,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../locations/presentation/pages/my_locations_page.dart';
+import '../../../matching/presentation/pages/preferences_page.dart';
 import 'edit_profile_page.dart';
 
 /// Tab de Perfil - Diseño limpio y moderno
@@ -148,6 +149,18 @@ class ProfileTab extends StatelessWidget {
                     icon: Icons.favorite_border_rounded,
                     label: 'Mis Favoritos',
                     onTap: () {},
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMenuItem(
+                    icon: Icons.tune_rounded,
+                    label: 'Mis Preferencias',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => PreferencesPage(userId: user.id),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
                   _buildMenuItem(

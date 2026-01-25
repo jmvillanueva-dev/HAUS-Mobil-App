@@ -10,6 +10,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/widgets/custom_text_field.dart';
+import '../../../matching/presentation/pages/preferences_page.dart';
 
 class EditProfilePage extends StatefulWidget {
   final UserEntity user;
@@ -220,6 +221,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       _buildBioField(),
                     ],
                   ),
+
+                  const SizedBox(height: 20),
+
+                  _buildFormCard(
+                    title: 'Preferencias de Roomie',
+                    children: [
+                      _buildPreferencesButton(),
+                    ],
+                  ),
                   // Espacio extra para que el scroll no choque con el bottom bar
                   const SizedBox(height: 100),
                 ],
@@ -266,6 +276,73 @@ class _EditProfilePageState extends State<EditProfilePage> {
           border: Border.all(color: AppTheme.borderDark),
         ),
         child: Icon(icon, color: AppTheme.textPrimaryDark, size: 20),
+      ),
+    );
+  }
+
+  Widget _buildPreferencesButton() {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PreferencesPage(userId: widget.user.id),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.borderDark),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.tune_rounded,
+                color: AppTheme.primaryColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Editar Preferencias',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimaryDark,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Ajusta tus criterios de búsqueda',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppTheme.textSecondaryDark,
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }
