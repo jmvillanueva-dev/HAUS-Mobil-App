@@ -5,12 +5,14 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/pages/landing_page.dart';
 import '../../../explore/presentation/pages/explore_tab.dart';
 import '../../../listings/presentation/pages/publish_tab.dart';
 import '../../../connections/presentation/pages/connections_tab.dart';
 import '../../../profile/presentation/pages/profile_tab.dart';
 import '../../../matching/presentation/pages/discover_page.dart';
+import '../../../matching/presentation/pages/preferences_page.dart';
 import 'home_tab.dart';
 
 /// Página principal con navegación por tabs estilo "Floating Pill"
@@ -273,14 +275,38 @@ class _MainPageState extends State<MainPage> {
                     AppTheme.secondaryColor.withOpacity(0.6),
                   ],
                 ),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DiscoverPage(),
-                    ),
-                  );
+                  if (_currentUser.hasCompletedPreferences) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DiscoverPage(),
+                      ),
+                    );
+                  } else {
+                    // Redirigir a preferencias si no están completas
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PreferencesPage(userId: _currentUser.id),
+                      ),
+                    );
+
+                    // Si completó las preferencias (result == true), recargar usuario y navegar
+                    if (result == true && mounted) {
+                      context.read<AuthBloc>().add(const AuthCheckRequested());
+
+                      // Navegación automática para experiencia fluida
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DiscoverPage(),
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
             ],

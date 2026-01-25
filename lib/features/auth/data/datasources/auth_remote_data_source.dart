@@ -245,6 +245,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           .eq('id', userId)
           .maybeSingle();
 
+      if (response != null) {
+        // Fetch preferences status separately to be safe
+        final prefs = await supabaseClient
+            .from('user_preferences')
+            .select('preferences_completed')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (prefs != null) {
+          response['has_completed_preferences'] =
+              prefs['preferences_completed'] ?? false;
+        } else {
+          response['has_completed_preferences'] = false;
+        }
+      }
+
       return response;
     } catch (e) {
       // developer.log('DEBUG: Error fetching profile: $e', name: 'Auth');

@@ -53,10 +53,8 @@ class EmailVerificationRequired extends AuthState {
 }
 
 /// Estado emitido cuando el perfil se actualiza exitosamente
-class ProfileUpdated extends AuthState {
-  final UserEntity user;
-
-  const ProfileUpdated(this.user);
+class ProfileUpdated extends AuthAuthenticated {
+  const ProfileUpdated(UserEntity user) : super(user);
 
   @override
   List<Object> get props => [user];
