@@ -6,6 +6,7 @@ import '../../../chat/presentation/pages/chat_list_page.dart';
 import '../../../chat/presentation/pages/chat_page.dart';
 import '../../../matching/domain/entities/match_entity.dart';
 import '../../../matching/domain/repositories/matching_repository.dart';
+import '../../../requests/presentation/pages/requests_page.dart';
 
 /// Tab de Conexiones - Solicitudes, Matches y Mensajes
 class ConnectionsTab extends StatefulWidget {
@@ -135,6 +136,76 @@ class _ConnectionsTabState extends State<ConnectionsTab>
             ),
           ),
           const SizedBox(height: 12),
+
+          // Botón de Solicitudes de Vivienda
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Material(
+              color: AppTheme.surfaceDark,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RequestsPage(),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.home_work_rounded,
+                          color: AppTheme.primaryColor,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Solicitudes de vivienda',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Ver interesados en tus publicaciones',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white54,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
 
           // Tabs
           Padding(

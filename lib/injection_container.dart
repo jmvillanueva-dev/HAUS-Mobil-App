@@ -31,6 +31,12 @@ import 'features/notifications/data/repositories/notification_repository_impl.da
 import 'features/notifications/domain/repositories/notification_repository.dart';
 import 'features/notifications/presentation/bloc/notification_bloc.dart';
 
+// Requests Feature imports
+import 'features/requests/data/datasources/request_remote_datasource.dart';
+import 'features/requests/data/repositories/request_repository_impl.dart';
+import 'features/requests/domain/repositories/request_repository.dart';
+import 'features/requests/presentation/bloc/request_bloc.dart';
+
 final getIt = GetIt.instance;
 final sl = GetIt.instance;
 
@@ -120,6 +126,23 @@ Future<void> configureDependencies() async {
   // Bloc - Singleton to maintain state across app
   getIt.registerLazySingleton<NotificationBloc>(
     () => NotificationBloc(repository: getIt<NotificationRepository>()),
+  );
+
+  // ====== Requests Feature ======
+  // Data Sources
+  getIt.registerLazySingleton<RequestRemoteDataSource>(
+    () => RequestRemoteDataSourceImpl(supabaseClient: getIt<SupabaseClient>()),
+  );
+
+  // Repositories
+  getIt.registerLazySingleton<RequestRepository>(
+    () => RequestRepositoryImpl(
+        remoteDataSource: getIt<RequestRemoteDataSource>()),
+  );
+
+  // Bloc
+  getIt.registerFactory<RequestBloc>(
+    () => RequestBloc(repository: getIt<RequestRepository>()),
   );
 
   // Initialize injectable (this will register annotated classes)
