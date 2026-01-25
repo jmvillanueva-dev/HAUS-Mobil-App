@@ -20,6 +20,9 @@ import 'features/chat/presentation/bloc/chat_bloc.dart';
 import 'features/matching/data/datasources/preferences_remote_datasource.dart';
 import 'features/matching/data/repositories/preferences_repository_impl.dart';
 import 'features/matching/domain/repositories/preferences_repository.dart';
+import 'features/matching/data/datasources/matching_datasource.dart';
+import 'features/matching/data/repositories/matching_repository_impl.dart';
+import 'features/matching/domain/repositories/matching_repository.dart';
 
 final getIt = GetIt.instance;
 final sl = GetIt.instance;
@@ -73,7 +76,7 @@ Future<void> configureDependencies() async {
     () => ChatBloc(chatRepository: getIt<ChatRepository>()),
   );
 
-  // ====== Matching Feature ======
+  // ====== Matching Feature - Preferences ======
   // Data Sources
   getIt.registerLazySingleton<PreferencesRemoteDatasource>(
     () => PreferencesRemoteDatasourceImpl(getIt<SupabaseClient>()),
@@ -82,6 +85,17 @@ Future<void> configureDependencies() async {
   // Repositories
   getIt.registerLazySingleton<PreferencesRepository>(
     () => PreferencesRepositoryImpl(getIt<PreferencesRemoteDatasource>()),
+  );
+
+  // ====== Matching Feature - Matching System ======
+  // Data Sources
+  getIt.registerLazySingleton<MatchingDataSource>(
+    () => MatchingDataSource(getIt<SupabaseClient>()),
+  );
+
+  // Repositories
+  getIt.registerLazySingleton<MatchingRepository>(
+    () => MatchingRepositoryImpl(getIt<MatchingDataSource>()),
   );
 
   // Initialize injectable (this will register annotated classes)
