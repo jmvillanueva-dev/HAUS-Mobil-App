@@ -43,6 +43,21 @@ class _MyListingsPageState extends State<MyListingsPage> {
           backgroundColor: AppTheme.backgroundDark,
           elevation: 0,
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BlocProvider(
+                  create: (_) => sl<ListingBloc>(),
+                  child: CreateListingPage(userId: widget.userId),
+                ),
+              ),
+            );
+          },
+          backgroundColor: AppTheme.primaryColor,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
         body: BlocBuilder<ListingBloc, ListingState>(
           builder: (context, state) {
             if (state is ListingsLoaded) {

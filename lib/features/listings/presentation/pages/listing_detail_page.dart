@@ -98,6 +98,21 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
     }
   }
 
+  void _openFullScreenMap() {
+    if (listing.latitude != null && listing.longitude != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => FullScreenMapView(
+            latitude: listing.latitude!,
+            longitude: listing.longitude!,
+            address: listing.address,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -303,50 +318,103 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                     const SizedBox(height: 24),
                   ],
 
-                  // Mapa de Ubicación
+                  // Mapa de Ubicación (MEJORADO - EXPANDIBLE)
                   if (listing.latitude != null &&
                       listing.longitude != null) ...[
-                    const Text(
-                      'Ubicación',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Ubicación',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                        ),
+                        TextButton.icon(
+                          onPressed: _openFullScreenMap,
+                          icon: const Icon(Icons.fullscreen,
+                              color: AppTheme.primaryColor),
+                          label: const Text(
+                            'Expandir mapa',
+                            style: TextStyle(color: AppTheme.primaryColor),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
-                    Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.borderDark),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: FlutterMap(
-                          options: MapOptions(
-                            initialCenter:
-                                LatLng(listing.latitude!, listing.longitude!),
-                            initialZoom: 15,
-                          ),
-                          children: [
-                            TileLayer(
-                              urlTemplate:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.haus.app',
-                            ),
-                            MarkerLayer(
-                              markers: [
-                                Marker(
-                                  point: LatLng(
-                                      listing.latitude!, listing.longitude!),
-                                  width: 40,
-                                  height: 40,
-                                  child: const Icon(Icons.location_on,
-                                      color: AppTheme.primaryColor, size: 40),
+                    GestureDetector(
+                      // Tap para abrir full screen
+                      onTap: _openFullScreenMap,
+                      child: Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.borderDark),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            children: [
+                              // Mapa NO interactivo (solo visual)
+                              IgnorePointer(
+                                child: FlutterMap(
+                                  options: MapOptions(
+                                    initialCenter: LatLng(
+                                        listing.latitude!, listing.longitude!),
+                                    initialZoom: 15,
+                                    interactionOptions:
+                                        const InteractionOptions(
+                                      flags: InteractiveFlag
+                                          .none, // Deshabilita gestos
+                                    ),
+                                  ),
+                                  children: [
+                                    TileLayer(
+                                      urlTemplate:
+                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      userAgentPackageName: 'com.haus.app',
+                                    ),
+                                    MarkerLayer(
+                                      markers: [
+                                        Marker(
+                                          point: LatLng(listing.latitude!,
+                                              listing.longitude!),
+                                          width: 40,
+                                          height: 40,
+                                          child: const Icon(Icons.location_on,
+                                              color: AppTheme.primaryColor,
+                                              size: 40),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ],
+                              ),
+                              // Overlay para indicar que es interactivo
+                              Container(
+                                color: Colors
+                                    .transparent, // Recibe el tap del GestureDetector
+                              ),
+                              // Badge de Expandir
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.open_in_full_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -393,6 +461,94 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
               ),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}
+
+/// Pantalla de Mapa Pantalla Completa
+class FullScreenMapView extends StatelessWidget {
+  final double latitude;
+  final double longitude;
+  final String address;
+
+  const FullScreenMapView({
+    super.key,
+    required this.latitude,
+    required this.longitude,
+    required this.address,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppTheme.backgroundDark,
+        title: Text('Mapa', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Stack(
+        children: [
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: LatLng(latitude, longitude),
+              initialZoom: 16,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.haus.app',
+              ),
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: LatLng(latitude, longitude),
+                    width: 40,
+                    height: 40,
+                    child: const Icon(Icons.location_on,
+                        color: AppTheme.primaryColor, size: 40),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Tooltip de dirección
+          Positioned(
+            bottom: 40,
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.borderDark),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on, color: AppTheme.primaryColor),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      address,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
