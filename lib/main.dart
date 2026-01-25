@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/services/global_message_listener.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/landing_page.dart';
 import 'injection_container.dart';
@@ -46,7 +47,15 @@ class HausApp extends StatelessWidget {
         theme: AppTheme.darkTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark,
-        home: BlocBuilder<AuthBloc, AuthState>(
+        home: BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            // Iniciar/detener el listener global de mensajes según el estado de auth
+            if (state is AuthAuthenticated) {
+              GlobalMessageListener().startListening();
+            } else if (state is AuthUnauthenticated) {
+              GlobalMessageListener().stopListening();
+            }
+          },
           builder: (context, state) {
             if (state is AuthAuthenticated) {
               return MainPage(user: state.user);
