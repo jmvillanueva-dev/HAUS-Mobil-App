@@ -36,5 +36,21 @@ class ListingEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, userId, title, price, city, createdAt];
+  List<Object?> get props => [
+        id,
+        userId,
+        title,
+        description,
+        price,
+        housingType,
+        city,
+        neighborhood,
+        address,
+        latitude,
+        longitude,
+        amenities,
+        houseRules,
+        imageUrls,
+        createdAt,
+      ];
 }
