@@ -1,187 +1,199 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'login_page.dart';
 import 'role_selection_page.dart';
 
 /// Pantalla de bienvenida inicial de HAUS
-/// Primera página que ve el usuario al abrir la app
-class LandingPage extends StatelessWidget {
+/// Diseño moderno con carrusel de fondos de arquitectura y estilo inmersivo
+class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
   @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
+  // Lista de imágenes de fondo
+  final List<String> _backgroundImages = [
+    'https://images.unsplash.com/photo-1648742867711-876f8a8680d5?q=80&w=1000&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1706200972821-615812a4fbe5?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1645327902189-6e4d25ab665c?q=80&w=724&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1736997164348-38cc38a45e76?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1709066436265-57064e943191?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1592240819880-9aa009357113?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1566352081904-cfa7024f5d6a?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1600074169098-16a54d791d0d?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  ];
+
+  int _currentIndex = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startImageTimer();
+  }
+
+  void _startImageTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 6), (timer) {
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % _backgroundImages.length;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    // Configurar barra de estado transparente para diseño full-screen
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ));
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom -
-                  32,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Top section: Hero
-                _buildHeroSection(size),
-
-                const SizedBox(height: 24),
-
-                // Middle section: Text
-                _buildTextSection(),
-
-                const SizedBox(height: 24),
-
-                // Bottom section: Buttons
-                _buildButtons(context),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroSection(Size size) {
-    return Container(
-      width: size.width * 0.85,
-      height: size.height * 0.35,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.primaryColor.withValues(alpha: 0.15),
-            AppTheme.primaryDark.withValues(alpha: 0.1),
-          ],
-        ),
-        border: Border.all(
-          color: AppTheme.primaryColor.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Stack(
+      body: Stack(
         children: [
-          // Background decorative circles
-          Positioned(
-            top: -30,
-            right: -30,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -40,
-            left: -20,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.secondaryColor.withValues(alpha: 0.1),
+          // 1. Carrusel de Imágenes de Fondo
+          Positioned.fill(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 1500),
+              child: Image.network(
+                _backgroundImages[_currentIndex],
+                key: ValueKey<String>(_backgroundImages[_currentIndex]),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  // Mientras carga la siguiente imagen, mantenemos la anterior o un color base
+                  return Container(color: AppTheme.backgroundDark);
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(color: AppTheme.surfaceDark);
+                },
               ),
             ),
           ),
 
-          // Main content
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo icon
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.primaryColor,
-                        AppTheme.primaryDark,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.home_rounded,
-                    size: 50,
-                    color: Colors.white,
-                  ),
+          // 2. Gradiente (Overlay mejorado para legibilidad)
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    // Arriba ligero para status bar
+                    Colors.black.withValues(alpha: 0.4),
+                    // Centro más transparente
+                    Colors.transparent,
+                    // Abajo oscureciendo gradualmente más fuerte para los textos
+                    Colors.black.withValues(alpha: 0.2),
+                    Colors.black.withValues(alpha: 0.6),
+                    AppTheme.backgroundDark.withValues(alpha: 0.95),
+                  ],
+                  stops: const [0.0, 0.4, 0.6, 0.8, 1.0],
                 ),
-                const SizedBox(height: 20),
+              ),
+            ),
+          ),
 
-                // Logo text
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [
-                      AppTheme.primaryColor,
-                      AppTheme.primaryLight,
-                    ],
-                  ).createShader(bounds),
-                  child: const Text(
-                    'HAUS',
-                    style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 8,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Stats badge
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceDark,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppTheme.borderDark,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+          // 3. Contenido Principal
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Logo simple superior
+                  Row(
                     children: [
-                      Icon(
-                        Icons.people_rounded,
-                        size: 18,
-                        color: AppTheme.secondaryColor,
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Icon(Icons.home_rounded, color: Colors.white, size: 24),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       const Text(
-                        '500+ Conexiones',
+                        'HAUS',
                         style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimaryDark,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          letterSpacing: 2,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 4,
+                              color: Colors.black45,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+
+                  const Spacer(),
+
+                  // Textos Principales con Sombra
+                  Text(
+                    'Bienvenido a tu\nnuevo hogar',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.1,
+                      letterSpacing: -0.5,
+                      shadows: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          offset: const Offset(0, 2),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'La comunidad más exclusiva para encontrar roomies y espacios únicos en Ecuador.',
+                    style: TextStyle(
+                      fontSize: 17,
+                      color: Colors.white.withValues(alpha: 0.95),
+                      height: 1.5,
+                      shadows: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          offset: const Offset(0, 1),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Botones de acción
+                  _buildActionButtons(context),
+
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ],
@@ -189,87 +201,23 @@ class LandingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTextSection() {
+  Widget _buildActionButtons(BuildContext context) {
     return Column(
       children: [
-        const Text(
-          'Encuentra tu\nroomie ideal',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryDark,
-            height: 1.2,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Únete a nuestra comunidad y conecta con personas que comparten tu estilo de vida.',
-          style: TextStyle(
-            fontSize: 16,
-            color: AppTheme.textSecondaryDark,
-            height: 1.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 12),
-        // Slogan
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 24,
-              height: 2,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Conecta, comparte, vive',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.primaryColor,
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              width: 24,
-              height: 2,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildButtons(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Primary button - Iniciar Sesión
+        // Botón Principal - Iniciar Sesión
         Container(
-          height: 56,
+          width: double.infinity,
+          height: 58,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             gradient: const LinearGradient(
-              colors: [
-                AppTheme.primaryColor,
-                AppTheme.primaryDark,
-              ],
+              colors: [AppTheme.primaryColor, AppTheme.primaryDark],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
                 blurRadius: 20,
-                offset: const Offset(0, 8),
+                offset: const Offset(0, 10),
               ),
             ],
           ),
@@ -285,15 +233,16 @@ class LandingPage extends StatelessWidget {
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
               ),
+              elevation: 0,
             ),
             child: const Text(
               'Iniciar Sesión',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.backgroundDark,
+                color: Colors.white,
               ),
             ),
           ),
@@ -301,53 +250,45 @@ class LandingPage extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // Secondary button - Crear Cuenta
+        // Botón Secundario - Crear Cuenta
         Container(
-          height: 56,
+          width: double.infinity,
+          height: 58,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
+            color: Colors.white.withValues(alpha: 0.15), // Un poco más visible
             border: Border.all(
-              color: AppTheme.primaryColor,
-              width: 2,
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 1.5,
             ),
           ),
-          child: OutlinedButton(
-            onPressed: () {
+          child: InkWell(
+            onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const RoleSelectionPage(),
                 ),
               );
             },
-            style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Text(
-              'Crear Cuenta',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
+            borderRadius: BorderRadius.circular(20),
+            child: const Center(
+              child: Text(
+                'Crear Cuenta',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(0, 1),
+                      blurRadius: 2,
+                      color: Colors.black26,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Terms text
-        Text(
-          'Al continuar, aceptas nuestros Términos de Servicio\ny Política de Privacidad',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppTheme.textTertiaryDark,
-            height: 1.4,
-          ),
-          textAlign: TextAlign.center,
         ),
       ],
     );
