@@ -91,19 +91,31 @@ class GlobalMessageListener {
           listingPrice: (data?['listingPrice'] as num?)?.toDouble(),
           listingImageUrl: data?['listingImage'],
         );
+      } else if (type == 'request_received') {
+        // Notificación de nueva solicitud
+        await _notificationService.showListingRequestNotification(
+          title: title ?? 'Nueva solicitud',
+          body: body ?? 'Tienes una nueva solicitud',
+          requestId: data?['requestId'],
+          listingId: data?['listingId'],
+        );
+      } else if (type == 'request_update') {
+        // Notificación de actualización de estado
+        await _notificationService.showRequestStatusUpdateNotification(
+          title: title ?? 'Actualización',
+          body: body ?? '',
+          requestId: data?['requestId'],
+          listingId: data?['listingId'],
+          status: data?['status'],
+        );
       } else if (type == 'match_request') {
-        // Notificación de Like/Solicitud
-        await _notificationService.showNewRequestNotification(
-          petName: 'tu perfil', // Adaptado para contexto de roomies
-          adopterName: body?.split(' quiere').first ?? 'Alguien',
+        // Legacy: Notificación de Like/Solicitud (si todavía se usa)
+        await _notificationService.showListingRequestNotification(
+          title: title ?? 'Nueva interacción',
+          body: body ?? 'Alguien está interesado',
         );
       } else if (type == 'new_match') {
-        // Notificación de Match
-        await _notificationService.showStatusChangeNotification(
-          petName: 'tu perfil', // Adaptado
-          status:
-              'aprobada', // Reusamos lógica de "aprobada" para mostrar check verde
-        );
+        // Legacy
       }
     } catch (e) {
       debugPrint('GlobalMessageListener error: $e');

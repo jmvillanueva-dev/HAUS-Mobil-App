@@ -124,6 +124,12 @@ class NotificationService {
         if (listingId != null) {
           navigationService.navigateToListing(listingId);
         }
+      } else if (type == 'request_received') {
+        // Navegar a ConnectionsTab (donde están las solicitudes)
+        // O idealmente a una página específica de solicitudes
+        navigationService.navigateToConnections();
+      } else if (type == 'request_update') {
+        navigationService.navigateToConnections();
       }
     } catch (e) {
       debugPrint('Error handling notification tap: $e');
@@ -234,15 +240,19 @@ class NotificationService {
     _notifiedMessageIds.clear();
   }
 
-  /// Muestra una notificación de nueva solicitud (para refugios)
-  Future<void> showNewRequestNotification({
-    required String petName,
-    required String adopterName,
+  /// Muestra una notificación de nueva solicitud de interés
+  Future<void> showListingRequestNotification({
+    required String title,
+    required String body,
+    String? requestId,
+    String? listingId,
+    String? listingImage,
   }) async {
     const androidDetails = AndroidNotificationDetails(
-      'adoption_requests',
-      'Solicitudes de Adopción',
-      channelDescription: 'Notificaciones de nuevas solicitudes de adopción',
+      'listing_requests',
+      'Solicitudes de Interés',
+      channelDescription:
+          'Notificaciones de nuevas solicitudes en tus publicaciones',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -259,25 +269,33 @@ class NotificationService {
       iOS: iosDetails,
     );
 
+    final payloadMap = {
+      'type': 'request_received',
+      'requestId': requestId,
+      'listingId': listingId,
+    };
+
     await _notifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000, // ID único
-      '🐾 Nueva Solicitud de Adopción',
-      '$adopterName quiere adoptar a $petName',
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
       details,
-      payload: 'adoption_request',
+      payload: jsonEncode(payloadMap),
     );
   }
 
-  /// Muestra una notificación de cambio de estado (para adoptantes)
-  Future<void> showStatusChangeNotification({
-    required String petName,
-    required String status,
+  /// Muestra una notificación de actualización de estado de solicitud
+  Future<void> showRequestStatusUpdateNotification({
+    required String title,
+    required String body,
+    String? requestId,
+    String? listingId,
+    String? status,
   }) async {
     const androidDetails = AndroidNotificationDetails(
-      'adoption_status',
-      'Estado de Solicitudes',
-      channelDescription:
-          'Notificaciones de cambios en el estado de solicitudes',
+      'request_updates',
+      'Actualizaciones de Solicitudes',
+      channelDescription: 'Notificaciones sobre el estado de tus solicitudes',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -294,17 +312,19 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    final emoji = status == 'aprobada' ? '✅' : '❌';
-    final message = status == 'aprobada'
-        ? 'Tu solicitud para adoptar a $petName fue aprobada'
-        : 'Tu solicitud para adoptar a $petName fue rechazada';
+    final payloadMap = {
+      'type': 'request_update',
+      'requestId': requestId,
+      'listingId': listingId,
+      'status': status,
+    };
 
     await _notifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000, // ID único
-      '$emoji Actualización de Solicitud',
-      message,
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title, // Ya viene con el emoji desde la BD si es necesario, o lo agregamos aquí
+      body,
       details,
-      payload: 'status_change',
+      payload: jsonEncode(payloadMap),
     );
   }
 
