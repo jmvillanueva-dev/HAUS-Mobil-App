@@ -100,6 +100,23 @@ class _HausAppState extends State<HausApp> {
       // Lo ideal es tener un 'ListingDetailsByIdPage' o similar.
       debugPrint(
           'Navigation to listing $listingId requested. Implementation pending (requires fetch by ID).');
+    } else if (pending.type == NavigationType.connections) {
+      // Navegar a MainPage y seleccionar tab de conexiones (index 3)
+      // Si ya estamos en MainPage, podríamos usar un StreamController o similar para cambiar el tab
+      // Por ahora, hacemos push a MainPage que es lo más seguro
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: context.read<AuthBloc>(),
+            child: MainPage(
+              user: (context.read<AuthBloc>().state as AuthAuthenticated).user,
+              initialIndex: 3, // Necesitamos agregar este parámetro a MainPage
+            ),
+          ),
+        ),
+        (route) => false,
+      );
     }
   }
 
