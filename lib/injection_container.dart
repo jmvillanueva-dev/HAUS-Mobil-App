@@ -16,6 +16,11 @@ import 'features/chat/data/repositories/chat_repository_impl.dart';
 import 'features/chat/domain/repositories/chat_repository.dart';
 import 'features/chat/presentation/bloc/chat_bloc.dart';
 
+// Matching Feature imports
+import 'features/matching/data/datasources/preferences_remote_datasource.dart';
+import 'features/matching/data/repositories/preferences_repository_impl.dart';
+import 'features/matching/domain/repositories/preferences_repository.dart';
+
 final getIt = GetIt.instance;
 final sl = GetIt.instance;
 
@@ -66,6 +71,17 @@ Future<void> configureDependencies() async {
   // Bloc - Factory to create new instance each time
   getIt.registerFactory<ChatBloc>(
     () => ChatBloc(chatRepository: getIt<ChatRepository>()),
+  );
+
+  // ====== Matching Feature ======
+  // Data Sources
+  getIt.registerLazySingleton<PreferencesRemoteDatasource>(
+    () => PreferencesRemoteDatasourceImpl(getIt<SupabaseClient>()),
+  );
+
+  // Repositories
+  getIt.registerLazySingleton<PreferencesRepository>(
+    () => PreferencesRepositoryImpl(getIt<PreferencesRemoteDatasource>()),
   );
 
   // Initialize injectable (this will register annotated classes)

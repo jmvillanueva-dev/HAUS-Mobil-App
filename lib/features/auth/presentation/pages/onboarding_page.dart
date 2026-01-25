@@ -77,7 +77,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     super.dispose();
   }
 
-  int get _totalSteps => 5;
+  int get _totalSteps => 4;
 
   Future<void> _pickImage(bool fromCamera) async {
     File? image;
@@ -352,8 +352,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
         return _buildContactStep();
       case 3:
         return _buildLocationStep();
-      case 4:
-        return _buildAboutStep();
       default:
         return _buildWelcomeStep();
     }
@@ -464,14 +462,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         _buildWelcomeTimelineItem(
           stepNumber: 3,
           icon: Icons.location_on_rounded,
-          title: 'Ubicacion',
+          title: 'Ubicación',
           description: 'Para encontrar roomies cerca',
-        ),
-        _buildWelcomeTimelineItem(
-          stepNumber: 4,
-          icon: Icons.person_rounded,
-          title: 'Sobre ti',
-          description: 'Tu estilo de vida',
           isLast: true,
         ),
       ],
