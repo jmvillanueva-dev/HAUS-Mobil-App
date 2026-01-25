@@ -11,165 +11,116 @@ class RoleSelectionPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              const Spacer(),
-
-              // Title section
-              _buildSelectionIcon(),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                '¿Cuál es tu perfil?',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimaryDark,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                'Esto nos ayudará a mostrarte roomies\nque se ajusten a tu estilo de vida',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.textSecondaryDark,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              SizedBox(height: size.height * 0.04),
-
-              // Role cards
-              _RoleCard(
-                icon: Icons.school_rounded,
-                title: 'Soy Estudiante',
-                subtitle: 'Busco roomie cerca de mi universidad',
-                gradient: [
-                  AppTheme.primaryColor,
-                  AppTheme.primaryDark,
-                ],
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const RegisterPage(role: 'student'),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-
-              _RoleCard(
-                icon: Icons.work_rounded,
-                title: 'Soy Trabajador',
-                subtitle: 'Busco roomie cerca de mi trabajo',
-                gradient: [
-                  AppTheme.secondaryColor,
-                  AppTheme.secondaryDark,
-                ],
-                isSecondary: true,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const RegisterPage(role: 'worker'),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 32),
-
-              // Info text
-              _buildInfoText(),
-
-              const Spacer(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSelectionIcon() {
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
+      body: Column(
         children: [
-          // Outer glow ring
+          // ===== TOP SECTION: Dark Header =====
           Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                width: 2,
-              ),
-            ),
-          ),
-          // Main icon container
-          Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.primaryColor,
-                  AppTheme.primaryDark,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 34,
-              color: Colors.white,
-            ),
-          ),
-          // Small lock badge
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppTheme.primaryColor,
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+            height: size.height * 0.32,
+            width: double.infinity,
+            color: AppTheme.backgroundDark,
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon - using circle shape
+                  _buildSelectionIcon(),
+                  const SizedBox(height: 20),
+                  // Title
+                  const Text(
+                    '¿Cuál es tu perfil?',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: Text(
+                      'Esto nos ayudará a mostrarte roomies que se ajusten a tu estilo de vida',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white60,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
-              child: const Icon(
-                Icons.question_mark_rounded,
-                size: 14,
-                color: AppTheme.primaryColor,
+            ),
+          ),
+
+          // ===== BOTTOM SECTION: White Card with Role Options =====
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                child: Column(
+                  children: [
+                    // Role cards
+                    _RoleCard(
+                      icon: Icons.school_rounded,
+                      title: 'Soy Estudiante',
+                      subtitle: 'Busco roomie cerca de mi universidad',
+                      gradient: [
+                        AppTheme.primaryColor,
+                        AppTheme.primaryDark,
+                      ],
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterPage(role: 'student'),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    _RoleCard(
+                      icon: Icons.work_rounded,
+                      title: 'Soy Trabajador',
+                      subtitle: 'Busco roomie cerca de mi trabajo',
+                      gradient: [
+                        AppTheme.secondaryColor,
+                        AppTheme.secondaryDark,
+                      ],
+                      isSecondary: true,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterPage(role: 'worker'),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const Spacer(),
+
+                    // Info text
+                    Text(
+                      'Podrás cambiar esto más adelante en tu perfil',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -178,14 +129,33 @@ class RoleSelectionPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoText() {
-    return Text(
-      'Podrás cambiar esto más adelante en tu perfil',
-      style: TextStyle(
-        fontSize: 12,
-        color: AppTheme.textTertiaryDark,
+  Widget _buildSelectionIcon() {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primaryColor,
+            AppTheme.primaryDark,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      textAlign: TextAlign.center,
+      child: const Icon(
+        Icons.person_rounded,
+        size: 36,
+        color: Colors.white,
+      ),
     );
   }
 }
@@ -217,44 +187,44 @@ class _RoleCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.surfaceDark,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: gradient[0].withValues(alpha: 0.3),
+              color: Colors.grey[300]!,
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: gradient[0].withValues(alpha: 0.1),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
             children: [
-              // Icon container with gradient
+              // Icon container with circle shape
               Container(
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: gradient,
                   ),
-                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: gradient[0].withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: gradient[0].withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Icon(
                   icon,
-                  size: 24,
+                  size: 26,
                   color: isSecondary ? AppTheme.backgroundDark : Colors.white,
                 ),
               ),
@@ -265,34 +235,34 @@ class _RoleCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimaryDark,
+                        color: Colors.black87,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.textSecondaryDark,
+                        color: Colors.grey[600],
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: gradient[0].withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  shape: BoxShape.circle,
+                  color: Colors.grey[100],
                 ),
                 child: Icon(
                   Icons.arrow_forward_rounded,
-                  size: 18,
-                  color: gradient[0],
+                  size: 20,
+                  color: Colors.grey[600],
                 ),
               ),
             ],
