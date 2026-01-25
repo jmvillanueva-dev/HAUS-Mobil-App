@@ -8,7 +8,8 @@ import '../../../listings/presentation/bloc/listing_bloc.dart';
 import '../../../listings/presentation/bloc/listing_event.dart';
 import '../../../listings/presentation/bloc/listing_state.dart';
 import '../../../listings/presentation/widgets/listing_card.dart';
-import '../../../matching/presentation/pages/discover_page.dart';
+
+import 'map_page.dart';
 
 class ExploreTab extends StatelessWidget {
   const ExploreTab({super.key});
@@ -238,23 +239,24 @@ class _ExploreContentViewState extends State<_ExploreContentView> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const DiscoverPage(),
-            ),
-          );
-        },
-        backgroundColor: AppTheme.primaryColor,
-        icon: const Icon(Icons.people_rounded, color: Colors.black),
-        label: const Text(
-          'Descubrir Roomies',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100),
+        child: FloatingActionButton(
+          heroTag: 'map_fab',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MapPage(),
+              ),
+            );
+          },
+          backgroundColor: AppTheme.primaryColor,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
+          child: const Icon(Icons.map_rounded, color: Colors.white, size: 28),
         ),
       ),
     );
