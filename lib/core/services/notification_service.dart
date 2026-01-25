@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
+import 'navigation_service.dart';
 
 /// Servicio singleton para gestionar notificaciones locales
 class NotificationService {
@@ -80,7 +83,51 @@ class NotificationService {
   /// Maneja el tap en una notificación
   void _onNotificationTapped(NotificationResponse response) {
     debugPrint('Notification tapped: ${response.payload}');
-    // TODO: Navegar a la página correspondiente cuando se implemente navegación global
+
+    if (response.payload == null) return;
+
+    try {
+      // Intentar parsear como payload antiguo 'type:id'
+      if (!response.payload!.startsWith('{')) {
+        final parts = response.payload!.split(':');
+        if (parts.length >= 2) {
+          final type = parts[0];
+          final id = parts[1];
+
+          if (type == 'chat') {
+            final navigationService = GetIt.I<NavigationService>();
+            navigationService.navigateToChat(conversationId: id);
+          }
+        }
+        return;
+      }
+
+      // Parsear JSON payload
+      final data = jsonDecode(response.payload!);
+      final type = data['type'] as String?;
+
+      final navigationService = GetIt.I<NavigationService>();
+
+      if (type == 'chat') {
+        navigationService.navigateToChat(
+          conversationId: data['conversationId'],
+          listingTitle: data['listingTitle'],
+          otherUserName: data['senderName'],
+          listingId: data['listingId'],
+          listingImageUrl: data['listingImageUrl'],
+          listingPrice: data['listingPrice'] != null
+              ? (data['listingPrice'] as num).toDouble()
+              : null,
+        );
+      } else if (type == 'listing') {
+        final listingId = data['listingId'];
+        if (listingId != null) {
+          navigationService.navigateToListing(listingId);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error handling notification tap: $e');
+    }
   }
 
   /// Establecer si la app está en foreground
@@ -102,6 +149,10 @@ class NotificationService {
     required String conversationId,
     required String senderName,
     required String messageContent,
+    String? listingTitle,
+    String? listingId,
+    String? listingImageUrl,
+    double? listingPrice,
   }) async {
     // Evitar notificar si ya se notificó este mensaje
     if (_notifiedMessageIds.contains(messageId)) {
@@ -150,13 +201,24 @@ class NotificationService {
     // Generar ID numérico único para la notificación
     final notificationId = messageId.hashCode;
 
+    // Crear payload JSON rico
+    final payloadMap = {
+      'type': 'chat',
+      'conversationId': conversationId,
+      'senderName': senderName,
+      'listingTitle': listingTitle,
+      'listingId': listingId,
+      'listingImageUrl': listingImageUrl,
+      'listingPrice': listingPrice,
+    };
+
     try {
       await _notifications.show(
         notificationId,
         '💬 $senderName',
         messageContent,
         details,
-        payload: 'chat:$conversationId',
+        payload: jsonEncode(payloadMap),
       );
 
       debugPrint('Notification shown for message $messageId from $senderName');

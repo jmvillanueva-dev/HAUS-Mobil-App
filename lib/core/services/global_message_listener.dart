@@ -81,10 +81,11 @@ class GlobalMessageListener {
         return;
       }
 
-      // Verificar que el mensaje pertenece a una conversación del usuario
-      final isMyConversation =
-          await _checkIfMyConversation(conversationId, userId);
-      if (!isMyConversation) {
+      // Obtener detalles de la conversación y del listing asociado
+      final conversationDetails =
+          await _getConversationDetails(conversationId, userId);
+
+      if (conversationDetails == null) {
         debugPrint('GlobalMessageListener: Message not for my conversations');
         return;
       }
@@ -95,34 +96,49 @@ class GlobalMessageListener {
       debugPrint(
           'GlobalMessageListener: New message from $senderName in $conversationId');
 
+      final listingData =
+          conversationDetails['listings'] as Map<String, dynamic>?;
+      String? listingImageUrl;
+      if (listingData != null && listingData['image_urls'] != null) {
+        final images = listingData['image_urls'] as List;
+        if (images.isNotEmpty) {
+          listingImageUrl = images[0] as String;
+        }
+      }
+
       // Mostrar notificación
       await _notificationService.showChatNotification(
         messageId: messageId ?? DateTime.now().toString(),
         conversationId: conversationId ?? '',
         senderName: senderName ?? 'Nuevo mensaje',
         messageContent: content ?? '',
+        listingTitle: listingData?['title'] as String?,
+        listingId: listingData?['id'] as String?,
+        listingPrice: (listingData?['price'] as num?)?.toDouble(),
+        listingImageUrl: listingImageUrl,
       );
     } catch (e) {
       debugPrint('GlobalMessageListener error: $e');
     }
   }
 
-  /// Verificar si una conversación pertenece al usuario
-  Future<bool> _checkIfMyConversation(
+  /// Verificar si una conversación pertenece al usuario y obtener detalles
+  Future<Map<String, dynamic>?> _getConversationDetails(
       String? conversationId, String userId) async {
-    if (conversationId == null) return false;
+    if (conversationId == null) return null;
 
     try {
       final response = await _supabase
           .from('conversations')
-          .select('id')
+          .select('*, listings(id, title, price, image_urls)')
           .eq('id', conversationId)
           .or('user_id.eq.$userId,host_id.eq.$userId')
           .maybeSingle();
 
-      return response != null;
+      return response;
     } catch (e) {
-      return false;
+      debugPrint('Error getting conversation details: $e');
+      return null;
     }
   }
 
