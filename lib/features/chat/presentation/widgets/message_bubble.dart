@@ -6,15 +6,24 @@ import '../../domain/entities/message_entity.dart';
 class MessageBubble extends StatelessWidget {
   final MessageEntity message;
   final bool showTime;
+  final bool showSenderName;
+
+  /// Nombre del otro usuario (fallback cuando senderName no está disponible)
+  final String? otherUserName;
 
   const MessageBubble({
     super.key,
     required this.message,
     this.showTime = true,
+    this.showSenderName = true,
+    this.otherUserName,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Nombre a mostrar: usar senderName si existe, sino otherUserName
+    final displayName = message.senderName ?? otherUserName;
+
     return Align(
       alignment: message.isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -28,6 +37,20 @@ class MessageBubble extends StatelessWidget {
               ? CrossAxisAlignment.end
               : CrossAxisAlignment.start,
           children: [
+            // Nombre del remitente (solo para mensajes recibidos)
+            if (!message.isMine && showSenderName && displayName != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 4),
+                child: Text(
+                  displayName,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+
             // Burbuja del mensaje
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -56,7 +79,7 @@ class MessageBubble extends StatelessWidget {
               ),
             ),
 
-            // Hora del mensaje
+            // Hora del mensaje y estado de lectura
             if (showTime)
               Padding(
                 padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
@@ -81,6 +104,17 @@ class MessageBubble extends StatelessWidget {
                             ? AppTheme.primaryColor
                             : AppTheme.textTertiaryDark,
                       ),
+                      if (message.isRead) ...[
+                        const SizedBox(width: 2),
+                        Text(
+                          'Leído',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ],
                   ],
                 ),
