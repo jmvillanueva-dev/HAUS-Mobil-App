@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../injection_container.dart';
 import '../../../chat/presentation/pages/chat_list_page.dart';
@@ -6,7 +7,7 @@ import '../../../chat/presentation/pages/chat_page.dart';
 import '../../../matching/domain/entities/match_entity.dart';
 import '../../../matching/domain/repositories/matching_repository.dart';
 
-/// Tab de Conexiones - Matches y mensajes de chat
+/// Tab de Conexiones - Solicitudes, Matches y Mensajes
 class ConnectionsTab extends StatefulWidget {
   const ConnectionsTab({super.key});
 
@@ -19,6 +20,7 @@ class _ConnectionsTabState extends State<ConnectionsTab>
   late TabController _tabController;
   final MatchingRepository _repository = getIt<MatchingRepository>();
 
+  List<MatchCandidate> _requests = [];
   List<Match> _matches = [];
   bool _isLoading = true;
   String? _error;
@@ -26,8 +28,8 @@ class _ConnectionsTabState extends State<ConnectionsTab>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _loadMatches();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadData();
   }
 
   @override
@@ -36,23 +38,68 @@ class _ConnectionsTabState extends State<ConnectionsTab>
     super.dispose();
   }
 
-  Future<void> _loadMatches() async {
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
-    final result = await _repository.getMatches();
+    try {
+      final requestsResult = await _repository.getIncomingLikes();
+      final matchesResult = await _repository.getMatches();
+
+      requestsResult.fold(
+        (failure) => _error = failure.message,
+        (requests) => _requests = requests,
+      );
+
+      matchesResult.fold(
+        (failure) => _error = failure.message,
+        (matches) => _matches = matches,
+      );
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleRequest(MatchCandidate candidate, bool accept) async {
+    // Optimistic update
+    setState(() {
+      _requests.removeWhere((r) => r.userId == candidate.userId);
+    });
+
+    final result = await _repository.recordInteraction(
+      targetUserId: candidate.userId,
+      action: accept ? InteractionType.like : InteractionType.skip,
+    );
 
     result.fold(
-      (failure) => setState(() {
-        _error = failure.message;
-        _isLoading = false;
-      }),
-      (matches) => setState(() {
-        _matches = matches;
-        _isLoading = false;
-      }),
+      (failure) {
+        // Revert if failed
+        setState(() {
+          _requests.add(candidate);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${failure.message}')),
+          );
+        });
+      },
+      (match) {
+        if (accept && match != null) {
+          setState(() {
+            _matches.insert(0, match);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('¡Nuevo Match con ${candidate.firstName}!'),
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          );
+          // Opcional: Cambiar a la tab de matches
+          // _tabController.animateTo(1);
+        }
+      },
     );
   }
 
@@ -78,7 +125,7 @@ class _ConnectionsTabState extends State<ConnectionsTab>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tus matches y conversaciones',
+                  'Gestiona tus solicitudes y conversaciones',
                   style: TextStyle(
                     fontSize: 14,
                     color: AppTheme.textSecondaryDark,
@@ -89,7 +136,7 @@ class _ConnectionsTabState extends State<ConnectionsTab>
           ),
           const SizedBox(height: 12),
 
-          // Tabs: Matches / Mensajes
+          // Tabs
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -109,15 +156,18 @@ class _ConnectionsTabState extends State<ConnectionsTab>
                 labelColor: AppTheme.backgroundDark,
                 unselectedLabelColor: AppTheme.textSecondaryDark,
                 labelStyle: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
                 unselectedLabelStyle: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.normal,
                 ),
+                labelPadding: const EdgeInsets.symmetric(
+                    horizontal: 4), // Reducir padding
                 tabs: [
-                  Tab(text: 'Matches (${_matches.length})'),
+                  _buildTabWithBadge('Solicitudes', _requests.isNotEmpty),
+                  _buildTabWithBadge('Matches', false),
                   const Tab(text: 'Mensajes'),
                 ],
               ),
@@ -128,50 +178,161 @@ class _ConnectionsTabState extends State<ConnectionsTab>
 
           // Contenido de las tabs
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Tab Matches
-                _buildMatchesList(),
-
-                // Tab Mensajes - Lista de chats
-                const ChatListPage(),
-              ],
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.red),
+                            const SizedBox(height: 8),
+                            Text(_error!,
+                                style: const TextStyle(color: Colors.white)),
+                            TextButton(
+                              onPressed: _loadData,
+                              child: const Text('Reintentar'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildRequestsList(),
+                          _buildMatchesList(),
+                          const ChatListPage(),
+                        ],
+                      ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMatchesList() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red),
-            const SizedBox(height: 8),
-            Text(_error!, style: const TextStyle(color: Colors.white)),
-            TextButton(
-              onPressed: _loadMatches,
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
+  Widget _buildRequestsList() {
+    if (_requests.isEmpty) {
+      return _buildEmptyState(
+        'No tienes solicitudes pendientes',
+        'Cuando alguien te de like, aparecerá aquí',
+        Icons.notifications_off_outlined,
       );
     }
 
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      itemCount: _requests.length,
+      itemBuilder: (context, index) {
+        final candidate = _requests[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceDark,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: candidate.avatarUrl != null
+                        ? NetworkImage(candidate.avatarUrl!)
+                        : null,
+                    child: candidate.avatarUrl == null
+                        ? const Icon(Icons.person)
+                        : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          candidate.displayName,
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${candidate.compatibilityScore.toInt()}% Compatible',
+                          style: GoogleFonts.inter(
+                            color: AppTheme.primaryColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (candidate.role != null)
+                          Text(
+                            candidate.role == 'student'
+                                ? 'Estudiante'
+                                : 'Profesional',
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _handleRequest(candidate, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.redAccent,
+                        side: const BorderSide(color: Colors.redAccent),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('RECHAZAR'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _handleRequest(candidate, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('ACEPTAR',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMatchesList() {
     if (_matches.isEmpty) {
-      return _buildMatchesPlaceholder();
+      return _buildEmptyState(
+        'Sin matches aún',
+        'Cuando encuentres a alguien compatible,\naparecerá aquí',
+        Icons.favorite_border_rounded,
+      );
     }
 
     return RefreshIndicator(
-      onRefresh: _loadMatches,
+      onRefresh: _loadData,
       child: GridView.builder(
         padding: const EdgeInsets.all(20),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -213,7 +374,7 @@ class _ConnectionsTabState extends State<ConnectionsTab>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -284,12 +445,12 @@ class _ConnectionsTabState extends State<ConnectionsTab>
     );
   }
 
-  Widget _buildMatchesPlaceholder() {
+  Widget _buildEmptyState(String title, String subtitle, IconData icon) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               width: 100,
@@ -306,23 +467,24 @@ class _ConnectionsTabState extends State<ConnectionsTab>
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
-                Icons.favorite_rounded,
+                icon,
                 size: 48,
                 color: AppTheme.primaryColor.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Sin matches aún',
-              style: TextStyle(
+            Text(
+              title,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimaryDark,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Cuando encuentres a alguien compatible,\naparecerá aquí',
+              subtitle,
               style: TextStyle(
                 fontSize: 14,
                 color: AppTheme.textSecondaryDark,
@@ -330,57 +492,34 @@ class _ConnectionsTabState extends State<ConnectionsTab>
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-
-            // Flow diagram
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildFlowStep(Icons.favorite_outline_rounded, 'Interés'),
-                _buildArrow(),
-                _buildFlowStep(Icons.handshake_outlined, 'Match'),
-                _buildArrow(),
-                _buildFlowStep(Icons.chat_bubble_outline_rounded, 'Chat'),
-              ],
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFlowStep(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.borderDark),
-          ),
-          child: Icon(icon, color: AppTheme.primaryColor, size: 20),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: AppTheme.textSecondaryDark,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildArrow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Icon(
-        Icons.arrow_forward_rounded,
-        size: 16,
-        color: AppTheme.textTertiaryDark,
+  Widget _buildTabWithBadge(String text, bool showBadge) {
+    return Tab(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min, // Ajustar al contenido
+        children: [
+          Flexible(
+              child: Text(text,
+                  overflow:
+                      TextOverflow.ellipsis)), // Evitar desbordamiento de texto
+          if (showBadge) ...[
+            const SizedBox(width: 4), // Reducir espacio
+            Container(
+              width: 6, // Reducir tamaño del punto
+              height: 6,
+              decoration: const BoxDecoration(
+                color: AppTheme.primaryColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
