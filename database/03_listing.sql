@@ -54,3 +54,4 @@ create policy "Give users access to own folder 1u753z_0" ON storage.objects FOR 
 create policy "Give users access to own folder 1u753z_1" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id = 'listings' AND auth.uid() = owner);
 create policy "Give users access to own folder 1u753z_2" ON storage.objects FOR UPDATE TO public USING (bucket_id = 'listings' AND auth.uid() = owner);
 create policy "Give users access to own folder 1u753z_3" ON storage.objects FOR DELETE TO public USING (bucket_id = 'listings' AND auth.uid() = owner);
+

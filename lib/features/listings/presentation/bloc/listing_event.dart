@@ -2,6 +2,37 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/listing_entity.dart';
 
+// --- Filter Class ---
+class ListingFilter extends Equatable {
+  final double? minPrice;
+  final double? maxPrice;
+  final String? housingType;
+  final String? city;
+  final List<String> amenities;
+  final String? searchQuery;
+
+  const ListingFilter({
+    this.minPrice,
+    this.maxPrice,
+    this.housingType,
+    this.city,
+    this.amenities = const [],
+    this.searchQuery,
+  });
+
+  bool get isEmpty =>
+      minPrice == null &&
+      maxPrice == null &&
+      housingType == null &&
+      city == null &&
+      amenities.isEmpty &&
+      (searchQuery == null || searchQuery!.isEmpty);
+
+  @override
+  List<Object?> get props =>
+      [minPrice, maxPrice, housingType, city, amenities, searchQuery];
+}
+
 abstract class ListingEvent extends Equatable {
   const ListingEvent();
 
@@ -46,4 +77,11 @@ class UpdateListingEvent extends ListingEvent {
 
   @override
   List<Object?> get props => [listing, newImages];
+}
+
+class UpdateFiltersEvent extends ListingEvent {
+  final ListingFilter filter;
+  const UpdateFiltersEvent({required this.filter});
+  @override
+  List<Object> get props => [filter];
 }
