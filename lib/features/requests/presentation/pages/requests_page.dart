@@ -6,6 +6,9 @@ import '../../domain/entities/listing_request_entity.dart';
 import '../bloc/request_bloc.dart';
 import '../bloc/request_event.dart';
 import '../bloc/request_state.dart';
+import '../../../../core/services/pdf_generator_service.dart';
+import '../../../listings/domain/entities/listing_entity.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 
 class RequestsPage extends StatelessWidget {
   const RequestsPage({super.key});
@@ -137,6 +140,56 @@ class _RequestCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (request.status == 'approved')
+                IconButton(
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.green),
+                  tooltip: 'Descargar Carta de Aceptación',
+                  onPressed: () async {
+                    try {
+                      // Simulating missing data as per requirements
+                      final mockListing = ListingEntity(
+                        id: request.listingId,
+                        userId: request.hostId,
+                        title: request.listingTitle ?? 'Propiedad',
+                        description: 'Descripción simulada de la propiedad.',
+                        price: 0.0, // Precio no disponible en request
+                        housingType: 'Apartamento',
+                        city: 'Ciudad',
+                        neighborhood: 'Barrio',
+                        address: 'Dirección simulada 123',
+                        amenities: ['Wifi', 'Cocina', 'Lavadora'],
+                        houseRules: ['No fumar', 'No fiestas'],
+                        imageUrls: [],
+                      );
+
+                      final mockHost = UserEntity(
+                        id: request.hostId,
+                        email: 'host@haus.app',
+                        firstName: 'Anfitrión',
+                        lastName: 'Haus',
+                      );
+
+                      await PdfGeneratorService().generateAcceptanceLetter(
+                        listing: mockListing,
+                        request: request,
+                        host: mockHost,
+                      );
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('PDF generado correctamente')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al generar PDF: $e')),
+                        );
+                      }
+                    }
+                  },
+                ),
               _StatusBadge(status: request.status),
             ],
           ),

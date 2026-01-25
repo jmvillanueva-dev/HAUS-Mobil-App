@@ -34,7 +34,10 @@ class NotificationModel extends NotificationEntity {
       case 'chat_message':
         return NotificationType.chatMessage;
       case 'status_change':
+      case 'request_update': // Manejar también actualizaciones de estado
         return NotificationType.statusChange;
+      case 'request_received':
+        return NotificationType.requestReceived;
       case 'system':
       default:
         return NotificationType.system;
@@ -61,6 +64,8 @@ class NotificationModel extends NotificationEntity {
         return 'chat_message';
       case NotificationType.statusChange:
         return 'status_change';
+      case NotificationType.requestReceived:
+        return 'request_received';
       case NotificationType.system:
         return 'system';
     }

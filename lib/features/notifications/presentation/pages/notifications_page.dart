@@ -7,6 +7,7 @@ import '../../domain/entities/notification_entity.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/notification_event.dart';
 import '../bloc/notification_state.dart';
+import '../../../requests/presentation/pages/requests_page.dart';
 
 /// Página de notificaciones del usuario
 class NotificationsPage extends StatefulWidget {
@@ -225,6 +226,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
           navigationService.navigateToListing(listingId);
         }
         break;
+      case NotificationType.requestReceived:
+        navigationService.navigateTo(const RequestsPage());
+        break;
+      case NotificationType.system:
       default:
         break;
     }
@@ -379,7 +384,10 @@ class _NotificationItem extends StatelessWidget {
         return Icons.chat_bubble_rounded;
       case NotificationType.statusChange:
         return Icons.info_rounded;
+      case NotificationType.requestReceived:
+        return Icons.person_add_rounded;
       case NotificationType.system:
+      default:
         return Icons.notifications_rounded;
     }
   }
@@ -390,7 +398,10 @@ class _NotificationItem extends StatelessWidget {
         return AppTheme.primaryColor;
       case NotificationType.statusChange:
         return Colors.blue;
+      case NotificationType.requestReceived:
+        return AppTheme.primaryColor;
       case NotificationType.system:
+      default:
         return Colors.grey;
     }
   }

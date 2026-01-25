@@ -32,21 +32,53 @@ class ListingCard extends StatelessWidget {
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(24)),
-              child: AspectRatio(
-                aspectRatio: 4 / 3,
-                child: listing.imageUrls.isNotEmpty
-                    ? Image.network(
-                        listing.imageUrls.first,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+              child: Stack(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: listing.imageUrls.isNotEmpty
+                        ? Image.network(
+                            listing.imageUrls.first,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey[800],
+                                child: const Icon(Icons.broken_image,
+                                    color: Colors.white54)),
+                          )
+                        : Container(
                             color: Colors.grey[800],
-                            child: const Icon(Icons.broken_image,
-                                color: Colors.white54)),
-                      )
-                    : Container(
-                        color: Colors.grey[800],
-                        child: const Icon(Icons.home,
-                            color: Colors.white54, size: 50)),
+                            child: const Icon(Icons.home,
+                                color: Colors.white54, size: 50)),
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: listing.isAvailable
+                              ? Colors.green.withValues(alpha: 0.9)
+                              : Colors.red.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          listing.isAvailable ? 'Disponible' : 'No disponible',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )),
+                  ),
+                ],
               ),
             ),
 

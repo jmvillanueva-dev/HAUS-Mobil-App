@@ -17,6 +17,7 @@ class ListingModel extends ListingEntity {
     required super.houseRules,
     required super.imageUrls,
     super.createdAt,
+    super.isAvailable = true,
   });
 
   factory ListingModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +39,7 @@ class ListingModel extends ListingEntity {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
+      isAvailable: json['is_available'] as bool? ?? true,
     );
   }
 

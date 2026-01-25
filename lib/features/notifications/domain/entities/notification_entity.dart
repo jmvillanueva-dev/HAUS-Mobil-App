@@ -5,6 +5,7 @@ enum NotificationType {
   chatMessage,
   statusChange,
   system,
+  requestReceived,
 }
 
 /// Entidad de Notificación para el sistema de notificaciones in-app

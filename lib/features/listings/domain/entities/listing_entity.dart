@@ -16,6 +16,7 @@ class ListingEntity extends Equatable {
   final List<String> houseRules;
   final List<String> imageUrls;
   final DateTime? createdAt;
+  final bool isAvailable;
 
   const ListingEntity({
     this.id,
@@ -33,6 +34,7 @@ class ListingEntity extends Equatable {
     required this.houseRules,
     required this.imageUrls,
     this.createdAt,
+    this.isAvailable = true,
   });
 
   @override
@@ -51,6 +53,8 @@ class ListingEntity extends Equatable {
         amenities,
         houseRules,
         imageUrls,
+        imageUrls,
         createdAt,
+        isAvailable,
       ];
 }
