@@ -4,7 +4,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/custom_text_field.dart';
 import '../widgets/loading_overlay.dart';
 import 'email_verification_sent_page.dart';
 import 'welcome_page.dart';
@@ -28,6 +27,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -69,8 +71,15 @@ class _RegisterPageState extends State<RegisterPage> {
         : AppTheme.primaryDark;
   }
 
+  // For input icons, use a darker/more visible color for worker
+  Color get _inputIconColor {
+    return widget.role == 'worker' ? Colors.grey[600]! : AppTheme.primaryColor;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       body: BlocConsumer<AuthBloc, AuthState>(
@@ -113,121 +122,149 @@ class _RegisterPageState extends State<RegisterPage> {
                 selectionColor: _themeColor.withValues(alpha: 0.3),
                 selectionHandleColor: _themeColor,
               ),
-              inputDecorationTheme:
-                  Theme.of(context).inputDecorationTheme.copyWith(
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: _themeColor, width: 2),
-                        ),
-                      ),
             ),
             child: LoadingOverlay(
               isLoading: isLoading,
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 24),
-
-                        // Header con botón de regreso
-                        _buildHeader(),
-
-                        const SizedBox(height: 16),
-
-                        // Register icon
-                        _buildRegisterIcon(),
-
-                        const SizedBox(height: 16),
-
-                        // Title
-                        _buildTitle(),
-
-                        const SizedBox(height: 24),
-
-                        // Name fields (row)
-                        _buildNameFields(),
-
-                        const SizedBox(height: 12),
-
-                        // Email field
-                        CustomTextField(
-                          controller: _emailController,
-                          label: 'Correo electrónico',
-                          hint: 'tu@email.com',
-                          prefixIcon: Icons.email_outlined,
-                          iconColor: _themeColor,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor ingresa tu correo';
-                            }
-                            final emailRegex =
-                                RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                            if (!emailRegex.hasMatch(value)) {
-                              return 'Ingresa un correo válido';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Password field
-                        CustomTextField(
-                          controller: _passwordController,
-                          label: 'Contraseña',
-                          hint: 'Mínimo 6 caracteres',
-                          prefixIcon: Icons.lock_outline,
-                          iconColor: _themeColor,
-                          isPassword: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor ingresa una contraseña';
-                            }
-                            if (value.length < 6) {
-                              return 'La contraseña debe tener al menos 6 caracteres';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Confirm password field
-                        CustomTextField(
-                          controller: _confirmPasswordController,
-                          label: 'Confirmar contraseña',
-                          hint: 'Repite tu contraseña',
-                          prefixIcon: Icons.lock_outline,
-                          iconColor: _themeColor,
-                          isPassword: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor confirma tu contraseña';
-                            }
-                            if (value != _passwordController.text) {
-                              return 'Las contraseñas no coinciden';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Register button
-                        _buildRegisterButton(isLoading),
-
-                        const SizedBox(height: 12),
-
-                        // Info text
-                        _buildInfoText(),
-
-                        const SizedBox(height: 16),
-                      ],
+              child: Column(
+                children: [
+                  // ===== TOP SECTION: Dark Header =====
+                  SafeArea(
+                    bottom: false,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      color: AppTheme.backgroundDark,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Icon
+                          _buildRegisterIcon(),
+                          const SizedBox(height: 10),
+                          // Title
+                          const Text(
+                            'Crea tu cuenta',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: Text(
+                              'Completa tus datos para comenzar',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white60,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+
+                  // ===== BOTTOM SECTION: White Form Card =====
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          topRight: Radius.circular(32),
+                        ),
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 24),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Name fields (row)
+                              _buildNameFields(),
+                              const SizedBox(height: 14),
+
+                              // Email field
+                              _buildTextField(
+                                controller: _emailController,
+                                label: 'Correo electrónico',
+                                hint: 'tu@email.com',
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor ingresa tu correo';
+                                  }
+                                  final emailRegex = RegExp(
+                                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                                  if (!emailRegex.hasMatch(value)) {
+                                    return 'Ingresa un correo válido';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 14),
+
+                              // Password field
+                              _buildPasswordField(
+                                controller: _passwordController,
+                                label: 'Contraseña',
+                                hint: 'Mínimo 6 caracteres',
+                                obscure: _obscurePassword,
+                                onToggle: () => setState(
+                                    () => _obscurePassword = !_obscurePassword),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor ingresa una contraseña';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'La contraseña debe tener al menos 6 caracteres';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 14),
+
+                              // Confirm password field
+                              _buildPasswordField(
+                                controller: _confirmPasswordController,
+                                label: 'Confirmar contraseña',
+                                hint: 'Repite tu contraseña',
+                                obscure: _obscureConfirmPassword,
+                                onToggle: () => setState(() =>
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor confirma tu contraseña';
+                                  }
+                                  if (value != _passwordController.text) {
+                                    return 'Las contraseñas no coinciden';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 22),
+
+                              // Register button
+                              _buildRegisterButton(isLoading),
+
+                              const SizedBox(height: 14),
+
+                              // Info text
+                              _buildInfoText(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -236,115 +273,30 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return const SizedBox.shrink();
-  }
-
   Widget _buildRegisterIcon() {
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Outer glow ring
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _themeColor.withValues(alpha: 0.3),
-                width: 2,
-              ),
-            ),
-          ),
-          // Main icon container
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _themeColor,
-                  _themeDarkColor,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _themeColor.withValues(alpha: 0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Icon(
-              _roleIcon,
-              size: 28,
-              color: widget.role == 'worker'
-                  ? AppTheme.backgroundDark
-                  : Colors.white,
-            ),
-          ),
-          // Small plus badge
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: _themeColor,
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.add_rounded,
-                size: 16,
-                color: _themeColor,
-              ),
-            ),
+    return Container(
+      width: 68,
+      height: 68,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_themeColor, _themeDarkColor],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _themeColor.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return Column(
-      children: [
-        const Text(
-          'Crea tu cuenta',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryDark,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Completa tus datos para comenzar a buscar tu roomie ideal',
-          style: TextStyle(
-            fontSize: 13,
-            color: AppTheme.textSecondaryDark,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+      child: Icon(
+        _roleIcon,
+        size: 32,
+        color: widget.role == 'worker' ? AppTheme.backgroundDark : Colors.white,
+      ),
     );
   }
 
@@ -352,38 +304,28 @@ class _RegisterPageState extends State<RegisterPage> {
     return Row(
       children: [
         Expanded(
-          child: CustomTextField(
+          child: _buildTextField(
             controller: _firstNameController,
             label: 'Nombre',
             hint: 'Tu nombre',
-            prefixIcon: Icons.person_outline,
-            iconColor: _themeColor,
+            icon: Icons.person_outline,
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Requerido';
-              }
-              if (value.length < 2) {
-                return 'Mínimo 2 letras';
-              }
+              if (value == null || value.isEmpty) return 'Requerido';
+              if (value.length < 2) return 'Mínimo 2 letras';
               return null;
             },
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: CustomTextField(
+          child: _buildTextField(
             controller: _lastNameController,
             label: 'Apellido',
             hint: 'Tu apellido',
-            prefixIcon: Icons.person_outline,
-            iconColor: _themeColor,
+            icon: Icons.person_outline,
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Requerido';
-              }
-              if (value.length < 2) {
-                return 'Mínimo 2 letras';
-              }
+              if (value == null || value.isEmpty) return 'Requerido';
+              if (value.length < 2) return 'Mínimo 2 letras';
               return null;
             },
           ),
@@ -392,22 +334,144 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: const TextStyle(color: Colors.black87, fontSize: 15),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            prefixIcon: Icon(icon, color: _inputIconColor, size: 20),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: _themeColor, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: AppTheme.errorColor, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: AppTheme.errorColor, width: 1.5),
+            ),
+          ),
+          validator: validator,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required bool obscure,
+    required VoidCallback onToggle,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          obscureText: obscure,
+          style: const TextStyle(color: Colors.black87, fontSize: 15),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            prefixIcon:
+                Icon(Icons.lock_outline, color: _inputIconColor, size: 20),
+            suffixIcon: GestureDetector(
+              onTap: onToggle,
+              child: Icon(
+                obscure
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: Colors.grey[500],
+                size: 20,
+              ),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: _themeColor, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: AppTheme.errorColor, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: AppTheme.errorColor, width: 1.5),
+            ),
+          ),
+          validator: validator,
+        ),
+      ],
+    );
+  }
+
   Widget _buildRegisterButton(bool isLoading) {
     return Container(
-      height: 48,
+      height: 52,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(
-          colors: [
-            _themeColor,
-            _themeDarkColor,
-          ],
+          colors: [_themeColor, _themeDarkColor],
         ),
         boxShadow: [
           BoxShadow(
-            color: _themeColor.withValues(alpha: 0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: _themeColor.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -418,7 +482,7 @@ class _RegisterPageState extends State<RegisterPage> {
           shadowColor: Colors.transparent,
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
         child: Text(
@@ -426,8 +490,9 @@ class _RegisterPageState extends State<RegisterPage> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppTheme.backgroundDark,
-            height: 1.2,
+            color: widget.role == 'worker'
+                ? AppTheme.backgroundDark
+                : Colors.white,
           ),
         ),
       ),
@@ -436,35 +501,24 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildInfoText() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
+        color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.borderDark,
-          width: 1,
-        ),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: _themeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.info_outline_rounded,
-              size: 18,
-              color: _themeColor,
-            ),
+          Icon(
+            Icons.info_outline_rounded,
+            size: 20,
+            color: Colors.grey[600],
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Recibirás un correo de verificación para activar tu cuenta',
               style: TextStyle(
-                color: AppTheme.textSecondaryDark,
+                color: Colors.grey[600],
                 fontSize: 12,
               ),
             ),
