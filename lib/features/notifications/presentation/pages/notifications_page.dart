@@ -218,7 +218,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
           );
         }
         break;
-      case NotificationType.matchRequest:
       case NotificationType.statusChange:
         // Asumimos que estas notificaciones tienen un listingId
         final listingId = notification.data?['listingId'] as String?;
@@ -378,8 +377,6 @@ class _NotificationItem extends StatelessWidget {
     switch (notification.type) {
       case NotificationType.chatMessage:
         return Icons.chat_bubble_rounded;
-      case NotificationType.matchRequest:
-        return Icons.home_rounded;
       case NotificationType.statusChange:
         return Icons.info_rounded;
       case NotificationType.system:
@@ -391,8 +388,6 @@ class _NotificationItem extends StatelessWidget {
     switch (notification.type) {
       case NotificationType.chatMessage:
         return AppTheme.primaryColor;
-      case NotificationType.matchRequest:
-        return Colors.orange;
       case NotificationType.statusChange:
         return Colors.blue;
       case NotificationType.system:

@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 /// Tipo de notificación
 enum NotificationType {
   chatMessage,
-  matchRequest,
   statusChange,
   system,
 }

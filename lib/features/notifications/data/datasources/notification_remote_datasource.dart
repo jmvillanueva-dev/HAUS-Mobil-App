@@ -38,24 +38,46 @@ class NotificationRemoteDatasourceImpl implements NotificationRemoteDatasource {
   @override
   Future<List<NotificationModel>> getNotifications() async {
     final userId = _currentUserId;
-    if (userId == null) return [];
+    if (userId == null) {
+      developer.log('getNotifications: No user ID found',
+          name: 'Notifications');
+      return [];
+    }
 
     developer.log('Fetching notifications for user: $userId',
         name: 'Notifications');
 
-    final response = await _supabase
-        .from('notifications')
-        .select()
-        .eq('user_id', userId)
-        .order('created_at', ascending: false)
-        .limit(100);
+    try {
+      final response = await _supabase
+          .from('notifications')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(100);
 
-    developer.log('Got ${response.length} notifications',
-        name: 'Notifications');
+      developer.log('Got ${response.length} raw notifications from DB',
+          name: 'Notifications');
 
-    return (response as List<dynamic>)
-        .map((json) => NotificationModel.fromJson(json as Map<String, dynamic>))
-        .toList();
+      final models = (response as List<dynamic>).map((json) {
+        try {
+          return NotificationModel.fromJson(json as Map<String, dynamic>);
+        } catch (e) {
+          developer.log('Error parsing notification: $e, JSON: $json',
+              name: 'Notifications');
+          rethrow;
+        }
+      }).toList();
+
+      for (var n in models) {
+        developer.log('Parsed notification: ${n.id} - ${n.type}',
+            name: 'Notifications');
+      }
+
+      return models;
+    } catch (e) {
+      developer.log('Error in getNotifications: $e', name: 'Notifications');
+      rethrow;
+    }
   }
 
   @override

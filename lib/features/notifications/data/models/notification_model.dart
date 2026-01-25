@@ -33,10 +33,6 @@ class NotificationModel extends NotificationEntity {
     switch (type) {
       case 'chat_message':
         return NotificationType.chatMessage;
-      case 'new_listing':
-        return NotificationType.matchRequest; // Reutilizamos para listings
-      case 'match_request':
-        return NotificationType.matchRequest;
       case 'status_change':
         return NotificationType.statusChange;
       case 'system':
@@ -63,8 +59,6 @@ class NotificationModel extends NotificationEntity {
     switch (type) {
       case NotificationType.chatMessage:
         return 'chat_message';
-      case NotificationType.matchRequest:
-        return 'new_listing';
       case NotificationType.statusChange:
         return 'status_change';
       case NotificationType.system:
