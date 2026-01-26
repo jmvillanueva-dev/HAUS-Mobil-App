@@ -12,6 +12,9 @@ import '../../../listings/presentation/pages/listing_detail_page.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
 import '../../../notifications/presentation/bloc/notification_bloc.dart';
 import '../../../notifications/presentation/bloc/notification_state.dart';
+import '../../../matching/presentation/bloc/home_matching_bloc.dart';
+import '../../../matching/domain/entities/match_entity.dart';
+import '../../../matching/presentation/pages/roomie_profile_page.dart';
 
 /// Tab de Inicio - Feed de habitaciones y roommates recomendados
 class HomeTab extends StatelessWidget {
@@ -24,9 +27,18 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inyectamos el Bloc y cargamos las publicaciones inmediatamente
-    return BlocProvider(
-      create: (_) => GetIt.instance<ListingBloc>()..add(LoadListingsEvent()),
+    // Inyectamos los Blocs necesarios
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              GetIt.instance<ListingBloc>()..add(LoadListingsEvent()),
+        ),
+        BlocProvider(
+          create: (_) =>
+              GetIt.instance<HomeMatchingBloc>()..add(LoadHomeMatches()),
+        ),
+      ],
       child: Scaffold(
         backgroundColor: AppTheme.backgroundDark,
         body: SafeArea(
@@ -36,6 +48,7 @@ class HomeTab extends StatelessWidget {
               return RefreshIndicator(
                 onRefresh: () async {
                   context.read<ListingBloc>().add(LoadListingsEvent());
+                  context.read<HomeMatchingBloc>().add(LoadHomeMatches());
                 },
                 color: AppTheme.primaryColor,
                 child: CustomScrollView(
@@ -388,106 +401,162 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  // --- SECCIÓN ROOMMATES (ORIGINAL - DATOS MOCK) ---
+  // --- SECCIÓN ROOMMATES (REAL - CONECTADO A SUPABASE) ---
   Widget _buildRecommendedRoommates() {
-    return SizedBox(
-      height: 180,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 5,
-        itemBuilder: (context, index) => _buildRoommateCard(index),
-      ),
+    return BlocBuilder<HomeMatchingBloc, HomeMatchingState>(
+      builder: (context, state) {
+        if (state is HomeMatchingLoading) {
+          return const SizedBox(
+            height: 180,
+            child: Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor)),
+          );
+        } else if (state is HomeMatchingLoaded) {
+          if (state.candidates.isEmpty) {
+            return SizedBox(
+              height: 100,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.person_off_rounded,
+                        color: AppTheme.textSecondaryDark, size: 32),
+                    const SizedBox(height: 8),
+                    Text(
+                      "No hay roomies compatibles por ahora",
+                      style: TextStyle(
+                          color: AppTheme.textSecondaryDark, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return SizedBox(
+            height: 180,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: state.candidates.length,
+              itemBuilder: (context, index) =>
+                  _buildRoommateCard(context, state.candidates[index]),
+            ),
+          );
+        } else if (state is HomeMatchingError) {
+          return SizedBox(
+            height: 100,
+            child: Center(
+              child: Text("Error al cargar roomies",
+                  style: TextStyle(color: AppTheme.errorColor)),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 
-  Widget _buildRoommateCard(int index) {
-    final names = ['María', 'Carlos', 'Ana', 'Diego', 'Laura'];
-    final ages = [24, 26, 22, 28, 23];
-    final roles = [
-      'Estudiante',
-      'Trabajador',
-      'Estudiante',
-      'Trabajador',
-      'Estudiante'
-    ];
-
-    return Container(
-      width: 140,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.primaryColor.withOpacity(0.3),
-                        AppTheme.primaryDark.withOpacity(0.3),
-                      ],
+  Widget _buildRoommateCard(BuildContext context, MatchCandidate candidate) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RoomieProfilePage(candidate: candidate),
+          ),
+        );
+      },
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.borderDark),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor.withOpacity(0.3),
+                          AppTheme.primaryDark.withOpacity(0.3),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                      image: candidate.avatarUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(candidate.avatarUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                     ),
-                    shape: BoxShape.circle,
+                    child: candidate.avatarUrl == null
+                        ? Center(
+                            child: Text(
+                              candidate.firstName.isNotEmpty
+                                  ? candidate.firstName[0].toUpperCase()
+                                  : 'U',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          )
+                        : null,
                   ),
-                  child: Center(
-                    child: Text(
-                      names[index][0],
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  const SizedBox(height: 12),
+                  Text(
+                    '${candidate.firstName}, ${(candidate.compatibilityScore).toInt()}%',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimaryDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _translateRole(candidate.role),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondaryDark,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Ver perfil',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
                         color: AppTheme.primaryColor,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '${names[index]}, ${ages[index]}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimaryDark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  roles[index],
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textSecondaryDark,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Ver perfil',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -641,6 +710,22 @@ class HomeTab extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _translateRole(String? role) {
+    if (role == null) return 'Roomie';
+    switch (role.toLowerCase()) {
+      case 'student':
+        return 'Estudiante';
+      case 'professional':
+        return 'Profesional';
+      case 'worker':
+        return 'Trabajador';
+      case 'digital nomad':
+        return 'Nómada Digital';
+      default:
+        return role;
+    }
   }
 
   // --- SECCIÓN MATCHES (ORIGINAL - DATOS MOCK) ---

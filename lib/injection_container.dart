@@ -24,6 +24,7 @@ import 'features/matching/domain/repositories/preferences_repository.dart';
 import 'features/matching/data/datasources/matching_datasource.dart';
 import 'features/matching/data/repositories/matching_repository_impl.dart';
 import 'features/matching/domain/repositories/matching_repository.dart';
+import 'features/matching/presentation/bloc/home_matching_bloc.dart';
 
 // Notifications Feature imports
 import 'features/notifications/data/datasources/notification_remote_datasource.dart';
@@ -110,6 +111,11 @@ Future<void> configureDependencies() async {
   // Repositories
   getIt.registerLazySingleton<MatchingRepository>(
     () => MatchingRepositoryImpl(getIt<MatchingDataSource>()),
+  );
+
+  // Bloc
+  getIt.registerFactory<HomeMatchingBloc>(
+    () => HomeMatchingBloc(getIt<MatchingRepository>()),
   );
 
   // ====== Notifications Feature ======
