@@ -15,6 +15,8 @@ import '../../../notifications/presentation/bloc/notification_state.dart';
 import '../../../matching/presentation/bloc/home_matching_bloc.dart';
 import '../../../matching/domain/entities/match_entity.dart';
 import '../../../matching/presentation/pages/roomie_profile_page.dart';
+import '../../../locations/presentation/bloc/locations_bloc.dart';
+import '../../../locations/domain/entities/user_location_entity.dart';
 
 /// Tab de Inicio - Feed de habitaciones y roommates recomendados
 class HomeTab extends StatelessWidget {
@@ -37,6 +39,10 @@ class HomeTab extends StatelessWidget {
         BlocProvider(
           create: (_) =>
               GetIt.instance<HomeMatchingBloc>()..add(LoadHomeMatches()),
+        ),
+        BlocProvider(
+          create: (_) =>
+              GetIt.instance<LocationsBloc>()..add(LoadMyLocations(user.id)),
         ),
       ],
       child: Scaffold(
@@ -213,25 +219,58 @@ class HomeTab extends StatelessWidget {
                       color: AppTheme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.location_on_rounded,
-                          size: 14,
-                          color: AppTheme.primaryColor,
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'Quito, Ecuador',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textSecondaryDark,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                      ],
+                    child: BlocBuilder<LocationsBloc, LocationsState>(
+                      builder: (context, state) {
+                        String locationText = 'Sin ubicación';
+                        if (state is LocationsLoaded &&
+                            state.locations.isNotEmpty) {
+                          final primaries =
+                              state.locations.where((l) => l.isPrimary);
+                          final primaryInfo = primaries.isNotEmpty
+                              ? primaries.first
+                              : state.locations.first;
+
+                          final n = primaryInfo.neighborhood;
+                          final c = primaryInfo.city;
+
+                          if (c != null && c.isNotEmpty) {
+                            locationText = c;
+                            if (n != null && n.isNotEmpty) {
+                              locationText = "$c, $n";
+                            }
+                          } else if (n != null && n.isNotEmpty) {
+                            locationText = n;
+                          } else if (primaryInfo.address != null) {
+                            locationText = primaryInfo.address!;
+                          }
+                        } else if (state is LocationsLoading) {
+                          locationText = 'Cargando...';
+                        }
+
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.location_on_rounded,
+                              size: 14,
+                              color: AppTheme.primaryColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                locationText,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textSecondaryDark,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],
