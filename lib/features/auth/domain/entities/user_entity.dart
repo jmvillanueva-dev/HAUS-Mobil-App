@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'subscription_plan.dart';
 
 /// Estados de verificación de identidad
 enum VerificationStatus {
@@ -109,6 +110,12 @@ class UserEntity extends Equatable {
   /// Fecha de última actualización del perfil
   final DateTime? updatedAt;
 
+  /// Nivel de suscripción actual
+  final SubscriptionTier subscriptionTier;
+
+  /// Indica si la suscripción está activa
+  final bool isSubscriptionActive;
+
   const UserEntity({
     required this.id,
     required this.email,
@@ -127,6 +134,8 @@ class UserEntity extends Equatable {
     this.hasCompletedPreferences = false,
     this.createdAt,
     this.updatedAt,
+    this.subscriptionTier = SubscriptionTier.free,
+    this.isSubscriptionActive = false,
   });
 
   /// Nombre completo para mostrar
@@ -172,6 +181,8 @@ class UserEntity extends Equatable {
     bool? hasCompletedPreferences,
     DateTime? createdAt,
     DateTime? updatedAt,
+    SubscriptionTier? subscriptionTier,
+    bool? isSubscriptionActive,
   }) {
     return UserEntity(
       id: id ?? this.id,
@@ -191,6 +202,8 @@ class UserEntity extends Equatable {
           hasCompletedPreferences ?? this.hasCompletedPreferences,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      subscriptionTier: subscriptionTier ?? this.subscriptionTier,
+      isSubscriptionActive: isSubscriptionActive ?? this.isSubscriptionActive,
     );
   }
 
@@ -212,5 +225,7 @@ class UserEntity extends Equatable {
         hasCompletedPreferences,
         createdAt,
         updatedAt,
+        subscriptionTier,
+        isSubscriptionActive,
       ];
 }
