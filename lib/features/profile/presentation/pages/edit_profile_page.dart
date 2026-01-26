@@ -603,10 +603,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.photo_library_outlined,
-                      color: Colors.black87),
+                      color: AppTheme.primaryColor),
                 ),
                 title: Text('Elegir de Galería',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+                    style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w500, color: Colors.black)),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(false);
@@ -620,10 +621,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.camera_alt_outlined,
-                      color: Colors.black87),
+                      color: AppTheme.primaryColor),
                 ),
                 title: Text('Tomar Foto',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+                    style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w500, color: Colors.black)),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(true);
