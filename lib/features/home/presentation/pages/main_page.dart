@@ -296,15 +296,24 @@ class _MainPageState extends State<MainPage> {
 
                     // Si completó las preferencias (result == true), recargar usuario y navegar
                     if (result == true && mounted) {
-                      context.read<AuthBloc>().add(const AuthCheckRequested());
+                      // Actualizamos el estado localmente para evitar que AuthCheckRequested
+                      // reinicie toda la app (emitiendo AuthLoading) y cierre la pantalla de Discover
+                      setState(() {
+                        _currentUser = _currentUser.copyWith(
+                          hasCompletedPreferences: true,
+                        );
+                      });
 
-                      // Navegación automática para experiencia fluida
+                      // Navegación automática
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const DiscoverPage(),
                         ),
                       );
+
+                      // Opcional: Sincronizar silenciosamente en segundo plano si fuera necesario
+                      // pero por ahora confiamos en la actualización local para mantener la UX fluida
                     }
                   }
                 },

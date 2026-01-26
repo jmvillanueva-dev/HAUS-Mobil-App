@@ -1458,13 +1458,13 @@ class _PreferencesPageState extends State<PreferencesPage> {
                       color: AppTheme.textSecondaryDark,
                       height: 1.5)),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
                 children: [
                   _buildFeatureChip(Icons.verified_rounded, 'Verificado'),
-                  const SizedBox(width: 12),
                   _buildFeatureChip(Icons.security_rounded, 'Seguro'),
-                  const SizedBox(width: 12),
                   _buildFeatureChip(Icons.flash_on_rounded, 'Rápido'),
                 ],
               ),
