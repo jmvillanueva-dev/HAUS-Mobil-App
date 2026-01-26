@@ -11,6 +11,12 @@ import '../bloc/chat_state.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/listing_chat_header.dart';
+import '../../../financial/domain/repositories/financial_repository.dart';
+import '../../../financial/presentation/pages/my_rent_page.dart';
+import '../../../../core/usecase/usecase.dart';
+import '../../../auth/domain/usecases/get_current_user.dart';
+import '../../../auth/domain/usecases/get_feature_access.dart';
+import '../../../subscription/presentation/pages/subscription_page.dart';
 
 /// Página de conversación individual
 class ChatPage extends StatefulWidget {
@@ -110,6 +116,122 @@ class _ChatPageState extends State<ChatPage> {
       conversationId: widget.conversationId,
       content: content,
     ));
+  }
+
+  Future<void> _navigateToRent() async {
+    if (_listingId == null) return;
+
+    try {
+      // 1. Verificar suscripción del usuario actual
+      final getCurrentUser = GetIt.I<GetCurrentUser>();
+      final userResult = await getCurrentUser(NoParams());
+
+      final user = userResult.fold((_) => null, (u) => u);
+
+      if (user != null) {
+        final getAccess = GetFeatureAccess();
+        final isHost = user.id == (await _fetchListingOwnerId(_listingId!));
+
+        if (isHost) {
+          final canAccess = getAccess(
+            tier: user.subscriptionTier,
+            featureId: 'receive_payments',
+          );
+
+          if (!canAccess) {
+            if (mounted) _showUpgradeDialog(context);
+            return;
+          }
+        }
+      }
+
+      // Mostrar feedback visual
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Buscando contrato de renta...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+
+      final repository = GetIt.I<FinancialRepository>();
+      final contracts = await repository.getContracts();
+
+      // Buscar contrato activo para este listing
+      final contract = contracts.firstWhere(
+        (c) => c.listingId == _listingId && c.status == 'active',
+        orElse: () => throw Exception('No se encontró un contrato activo'),
+      );
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MyRentPage(contract: contract),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No tienes contrato activo para este listing'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<String?> _fetchListingOwnerId(String listingId) async {
+    try {
+      final supabase = GetIt.I<SupabaseClient>();
+      final response = await supabase
+          .from('listings')
+          .select('user_id')
+          .eq('id', listingId)
+          .maybeSingle();
+      return response?['user_id'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _showUpgradeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.surfaceDark,
+        title:
+            const Text('Mejora tu Plan', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Para gestionar tus rentas y recibir pagos directamente en la app, necesitas un plan Pro o Business.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child:
+                const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Ver Planes'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Navegar al detalle del listing
@@ -212,6 +334,15 @@ class _ChatPageState extends State<ChatPage> {
           foregroundColor: Colors.white,
         ),
       ),
+      actions: [
+        if (_listingId != null)
+          IconButton(
+            icon: const Icon(Icons.receipt_long_rounded,
+                color: AppTheme.primaryColor),
+            tooltip: 'Mi Renta',
+            onPressed: _navigateToRent,
+          ),
+      ],
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
