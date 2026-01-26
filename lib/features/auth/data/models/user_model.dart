@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/user_entity.dart';
+import '../../domain/entities/subscription_plan.dart';
 
 /// Modelo de datos de usuario para HAUS
 /// Maneja la conversión entre Supabase y UserEntity
@@ -21,6 +22,8 @@ class UserModel extends UserEntity {
     super.hasCompletedPreferences,
     super.createdAt,
     super.updatedAt,
+    super.subscriptionTier,
+    super.isSubscriptionActive,
   });
 
   /// Crear desde usuario de Supabase Auth (auth.users)
@@ -88,6 +91,10 @@ class UserModel extends UserEntity {
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'] as String)
           : null,
+      subscriptionTier: SubscriptionPlan.fromTier(
+              json['subscription_tier'] as String? ?? 'free')
+          .tier,
+      isSubscriptionActive: json['subscription_active'] as bool? ?? false,
     );
   }
 
@@ -122,6 +129,10 @@ class UserModel extends UserEntity {
       updatedAt: profile['updated_at'] != null
           ? DateTime.tryParse(profile['updated_at'] as String)
           : null,
+      subscriptionTier: SubscriptionPlan.fromTier(
+              profile['subscription_tier'] as String? ?? 'free')
+          .tier,
+      isSubscriptionActive: profile['subscription_active'] as bool? ?? false,
     );
   }
 
@@ -204,6 +215,8 @@ class UserModel extends UserEntity {
       hasCompletedPreferences: entity.hasCompletedPreferences,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      subscriptionTier: entity.subscriptionTier,
+      isSubscriptionActive: entity.isSubscriptionActive,
     );
   }
 }

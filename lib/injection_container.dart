@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/navigation_service.dart';
+import 'core/services/pdf_generator_service.dart';
 import 'injection_container.config.dart';
 import 'features/locations/domain/usecases/get_my_locations_usecase.dart';
 import 'features/locations/domain/usecases/update_location_usecase.dart';
@@ -38,6 +39,20 @@ import 'features/requests/data/repositories/request_repository_impl.dart';
 import 'features/requests/domain/repositories/request_repository.dart';
 import 'features/requests/presentation/bloc/request_bloc.dart';
 
+// Financial Feature imports
+import 'features/financial/data/repositories/financial_repository_impl.dart';
+import 'features/financial/domain/repositories/financial_repository.dart';
+import 'features/financial/domain/usecases/calculate_payment_breakdown.dart';
+import 'features/financial/domain/usecases/get_payment_calendar.dart';
+import 'features/financial/domain/usecases/process_simulated_payment.dart';
+import 'features/financial/domain/usecases/get_contract_context.dart';
+import 'features/financial/domain/usecases/calculate_monthly_earnings.dart';
+import 'features/financial/presentation/bloc/fintech_bloc.dart';
+
+// Subscription Feature imports
+import 'features/subscription/data/repositories/subscription_repository_impl.dart';
+import 'features/subscription/domain/repositories/subscription_repository.dart';
+
 final getIt = GetIt.instance;
 final sl = GetIt.instance;
 
@@ -69,6 +84,7 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
   getIt.registerLazySingleton<NavigationService>(() => NavigationService());
+  getIt.registerLazySingleton<PdfGeneratorService>(() => PdfGeneratorService());
 
   // Locations Feature - Manual registrations for Use Cases (registered before init)
   // Use Cases
@@ -149,6 +165,36 @@ Future<void> configureDependencies() async {
   // Bloc
   getIt.registerFactory<RequestBloc>(
     () => RequestBloc(repository: getIt<RequestRepository>()),
+  );
+
+  // ====== Financial Feature ======
+  // Repositories
+  getIt.registerLazySingleton<FinancialRepository>(
+    () => FinancialRepositoryImpl(getIt<SupabaseClient>()),
+  );
+
+  // Use Cases
+  getIt.registerLazySingleton(() => CalculatePaymentBreakdown());
+  getIt.registerLazySingleton(() => GetPaymentCalendar(getIt()));
+  getIt.registerLazySingleton(() => ProcessSimulatedPayment());
+  getIt.registerLazySingleton(() => GetContractContext());
+  getIt.registerLazySingleton(() => CalculateMonthlyEarnings());
+
+  // Bloc
+  getIt.registerFactory<FintechBloc>(
+    () => FintechBloc(
+      repository: getIt<FinancialRepository>(),
+      getPaymentCalendar: getIt<GetPaymentCalendar>(),
+      processSimulatedPayment: getIt<ProcessSimulatedPayment>(),
+      getContractContext: getIt<GetContractContext>(),
+      calculateMonthlyEarnings: getIt<CalculateMonthlyEarnings>(),
+    ),
+  );
+
+  // ====== Subscription Feature ======
+  // Repositories
+  getIt.registerLazySingleton<SubscriptionRepository>(
+    () => SubscriptionRepositoryImpl(getIt<SupabaseClient>()),
   );
 
   // Initialize injectable (this will register annotated classes)
