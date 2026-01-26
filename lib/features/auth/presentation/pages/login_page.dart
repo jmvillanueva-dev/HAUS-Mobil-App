@@ -199,7 +199,7 @@ class _LoginPageState extends State<LoginPage>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '- Conecta, comparte, vive -',
+                              'Donde compartir se siente como casa',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w300,
