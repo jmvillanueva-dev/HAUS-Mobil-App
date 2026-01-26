@@ -446,7 +446,7 @@ class HomeTab extends StatelessWidget {
       builder: (context, state) {
         if (state is HomeMatchingLoading) {
           return const SizedBox(
-            height: 180,
+            height: 210,
             child: Center(
                 child: CircularProgressIndicator(color: AppTheme.primaryColor)),
           );
@@ -472,7 +472,7 @@ class HomeTab extends StatelessWidget {
             );
           }
           return SizedBox(
-            height: 180,
+            height: 210,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -496,6 +496,9 @@ class HomeTab extends StatelessWidget {
   }
 
   Widget _buildRoommateCard(BuildContext context, MatchCandidate candidate) {
+    final compatibilityColor =
+        _getCompatibilityColor(candidate.compatibilityScore);
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -506,98 +509,197 @@ class HomeTab extends StatelessWidget {
         );
       },
       child: Container(
-        width: 140,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
+        width: 160,
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: AppTheme.surfaceDark,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.borderDark),
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.primaryColor.withOpacity(0.3),
-                          AppTheme.primaryDark.withOpacity(0.3),
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                      image: candidate.avatarUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(candidate.avatarUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: candidate.avatarUrl == null
-                        ? Center(
-                            child: Text(
-                              candidate.firstName.isNotEmpty
-                                  ? candidate.firstName[0].toUpperCase()
-                                  : 'U',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${candidate.firstName}, ${(candidate.compatibilityScore).toInt()}%',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimaryDark,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _translateRole(candidate.role),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textSecondaryDark,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'Ver perfil',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppTheme.borderDark,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              // Fondo sutil con gradiente
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppTheme.surfaceDarkElevated.withOpacity(0.5),
+                        AppTheme.surfaceDark,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Avatar con anillo de compatibilidad
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 76,
+                          height: 76,
+                          child: CircularProgressIndicator(
+                            value: candidate.compatibilityScore / 100,
+                            strokeWidth: 3,
+                            backgroundColor: AppTheme.borderDark,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                compatibilityColor),
+                          ),
+                        ),
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: compatibilityColor.withOpacity(0.2),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                            image: candidate.avatarUrl != null
+                                ? DecorationImage(
+                                    image: NetworkImage(candidate.avatarUrl!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                          ),
+                          child: candidate.avatarUrl == null
+                              ? Center(
+                                  child: Text(
+                                    candidate.firstName.isNotEmpty
+                                        ? candidate.firstName[0].toUpperCase()
+                                        : 'U',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: compatibilityColor,
+                                    ),
+                                  ),
+                                )
+                              : null,
+                        ),
+                        // Badge de porcentaje
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: compatibilityColor,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: AppTheme.surfaceDark, width: 1.5),
+                            ),
+                            child: Text(
+                              '${candidate.compatibilityScore.toInt()}%',
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Nombre
+                    Text(
+                      candidate.firstName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimaryDark,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+
+                    // Rol / Profesión
+                    Text(
+                      _translateRole(candidate.role),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textSecondaryDark,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Botón "Ver perfil" estilizado
+                    Container(
+                      width: double.infinity,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          colors: [
+                            compatibilityColor,
+                            compatibilityColor.withOpacity(0.8),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: compatibilityColor.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Ver perfil',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  Color _getCompatibilityColor(double score) {
+    if (score >= 90) return const Color(0xFF00E676); // Verde brillante
+    if (score >= 75) return AppTheme.primaryColor; // Turquesa HAUS
+    if (score >= 50) return const Color(0xFFFFC107); // Ámbar
+    return const Color(0xFFFF5252); // Rojo suave
   }
 
   // --- SECCIÓN PUBLICACIONES REALES (NUEVA LÓGICA) ---
