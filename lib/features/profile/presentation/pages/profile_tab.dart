@@ -6,6 +6,8 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../locations/presentation/pages/my_locations_page.dart';
 import '../../../matching/presentation/pages/preferences_page.dart';
+import '../../../financial/presentation/pages/haus_business_page.dart';
+import '../../../subscription/presentation/pages/subscription_page.dart';
 import 'edit_profile_page.dart';
 
 /// Tab de Perfil - Diseño limpio y moderno
@@ -145,6 +147,46 @@ class ProfileTab extends StatelessWidget {
               ),
               child: Column(
                 children: [
+                  _buildMenuItem(
+                    icon: Icons.business_center_rounded,
+                    label: 'Haus Business',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const HausBusinessPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMenuItem(
+                    icon: Icons.star_border_rounded,
+                    label: 'Mi Plan',
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        user.subscriptionTier.name.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SubscriptionPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
                   _buildMenuItem(
                     icon: Icons.favorite_border_rounded,
                     label: 'Mis Favoritos',
